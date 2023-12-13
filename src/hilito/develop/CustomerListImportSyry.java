@@ -35,9 +35,10 @@ public class CustomerListImportSyry implements ImportFieldTransActionPOI {
             RecordSet recordSet = new RecordSet();
             String territory =  excelParse.getValue(sheetindex, row, TERRITORY_COL);
             HilitoLog.log("开始添加第"+row+"行数据,territory="+territory);
-            String sql = "SELECT id FROM CUS_FIELDDATA WHERE CUS_FIELDDATA.field0 = " + territory;
+            // String sql = "SELECT id FROM CUS_FIELDDATA WHERE CUS_FIELDDATA.field0 = " + territory; 会额外导入离职人员
+            String sql = "SELECT id FROM vw_Territory WHERE vw_Territory.field0 = " + territory;
             HilitoLog.log("执行sql="+sql);
-            recordSet.execute("SELECT id FROM CUS_FIELDDATA WHERE CUS_FIELDDATA.field0 = " + territory);
+            recordSet.execute(sql);
             String value;
             if (recordSet.next()) {
                 value = Util.null2String(recordSet.getString(1));
