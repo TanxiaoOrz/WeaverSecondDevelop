@@ -2,6 +2,7 @@
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+.idea/**
 
 ### Eclipse ###
 .apt_generated
@@ -27,3 +28,8 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+/web/WEB-INF/prop/initDb.properties
+/web/log/devlog/20240127/BaseTest/00.log
+/log/devlog/20240127/BaseTest/00.log
+/log/sdk.log
