@@ -44,7 +44,7 @@ public class AuthGuangHua {
     public String getUserName(int userId) {
         RecordSet set = new RecordSet();
         String userName = "";
-        String sql = "select lastname from hrmresource where  id=" + userId;
+        String sql = "select dlm from uf_transLogin where  ry=" + userId;
         set.execute(sql);
         if (set.next()) {
             userName = Util.null2String(set.getString(1));
