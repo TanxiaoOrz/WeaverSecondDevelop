@@ -2,8 +2,15 @@ package com.customization.test;
 
 
 import com.customization.commons.Console;
+import com.sun.tools.attach.AgentInitializationException;
+import com.sun.tools.attach.AgentLoadException;
+import com.sun.tools.attach.AttachNotSupportedException;
+import hotswap.HotSwap;
 import org.junit.Test;
 import weaver.conn.RecordSet;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author liutaihong
@@ -27,6 +34,11 @@ public class TestRecordUtil extends BaseTest {
             System.out.println("版本:" + rs.getString(4));
             //Console.log(sql);
         }
+    }
+
+    @Test
+    public void doSwap() throws AgentLoadException, IOException, AttachNotSupportedException, ClassNotFoundException, AgentInitializationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        new HotSwap().doSwap("hotswap.HotSwap",false,3, true);
     }
 
 
