@@ -2,14 +2,19 @@ package com.supezet;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.huawei.shade.org.joda.time.LocalDate;
+import hotswap.VersionControl;
 import okhttp3.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 import weaver.conn.RecordSet;
+import weaver.general.LocateUtil;
 import weaver.general.Util;
 import weaver.interfaces.schedule.BaseCronJob;
 
-import java.io.IOException;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -21,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @Description: 将人员信息同步到培训系统中
  * @Version: 1.0
  **/
-public class SyncUserTraining extends BaseCronJob {
+public class SyncUserTraining extends BaseCronJob implements VersionControl {
     /**
      * 支持访问文档
      * @Url https://tbc.21tb.com/open/platformDoc/index.do#/guide
@@ -30,15 +35,23 @@ public class SyncUserTraining extends BaseCronJob {
     public static final String APP_KEY = "FAAF846F1EA5450E8D71B9B2E948AFC5";
     public static final String SIGN = "2F6B226E1A114163A07CA5F18026FCB3";
     public static final String api = "https://supezet.21tb.com"+"/v1/uc/user/syncUsersVer2";
+    public static final String FORBIDDEN = "FORBIDDEN";
+    public static final String ENABLE = "Enable";
 
 
     private RecordSet recordSet;
-    private int successCount;
 
 
     private JSONObject failMessages;
     private String errorMessage;
     private HashMap<Integer, User> users;
+
+    public static void main(String[] args) {
+        LocalDate localDate = LocalDate.now();
+        LocalTime localTime =  LocalTime.now();
+        System.out.println("localTime = " + localTime.format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        System.out.println("localDate = " + localDate);
+    }
 
 
     @Override
@@ -47,21 +60,28 @@ public class SyncUserTraining extends BaseCronJob {
         recordSet = new RecordSet();
         failMessages = null;
         errorMessage = null;
-        int syncCount = getUnSyncPeople();
+        int syncCount = getAddPeople() + getDeletePeople();
         supezetLog.log("待同步人员共有"+ syncCount +"个");
-        try {
-            successCount = syncPeople();
-        } catch (IOException|JSONException e) {
-            supezetLog.log("同步结束");
-            return;
-        }
-        supezetLog.log("成功同步人员共有"+ successCount +"个");
-        if (successCount > 0) {
-            updateRecord();
+        if (syncCount > 0) {
+            int successCount;
+            try {
+                successCount = syncPeople();
+            } catch (Exception e) {
+                supezetLog.log("同步结束");
+                return;
+            }
+            supezetLog.log("成功同步人员共有" + successCount + "个");
+            if (errorMessage != null) {
+                supezetLog.log("同步出错,errorMessage=>" + errorMessage);
+            } else if (successCount > 0) {
+                updateRecord();
+            }
+        } else {
+            supezetLog.log("无需同步");
         }
     }
 
-    private int getUnSyncPeople() {
+    private int getAddPeople() {
         final String sql = "select h.id,h.workcode,h.lastname,d.departmentcode from" +
                 "(SELECT hrm.id,hrm.workcode,hrm.departmentid,hrm.lastname from HrmResource as hrm" +
                 " left join uf_transLogin as login on hrm.id = login.ry where ry is null and status not in (4, 5))" +
@@ -73,14 +93,41 @@ public class SyncUserTraining extends BaseCronJob {
             User user = new User(
                     Util.null2String(recordSet.getString("workcode")),
                     Util.null2String(recordSet.getString("lastname")),
-                    Util.null2String(recordSet.getString("departmentcode"))
+                    Util.null2String(recordSet.getString("departmentcode")),
+                    ENABLE
             );
-            users.put(id,user);
+            if (user.getEmployeeCode().equals(""))
+                supezetLog.log("员工id=>"+id+"姓名"+user.getLoginName()+"的员工编号为空,请维护");
+            else
+                users.put(id,user);
         }
         return users.size();
     }
 
-    private Integer syncPeople() throws IOException, JSONException {
+    private int getDeletePeople() {
+        final String sql = "select h.id,h.workcode,h.lastname,d.departmentcode from" +
+                "(SELECT hrm.id,hrm.workcode,hrm.departmentid,hrm.lastname from HrmResource as hrm" +
+                " left join uf_transLogin as login on hrm.id = login.ry where ry is not null and status in (4, 5))" +
+                " as h left join hrmdepartment as d on h.departmentid = d.id";
+        recordSet.execute(sql);
+        //users = new HashMap<>(recordSet.getCounts());
+        while (recordSet.next()) {
+            Integer id = Util.getIntValue(recordSet.getInt("id"));
+            User user = new User(
+                    Util.null2String(recordSet.getString("workcode")),
+                    Util.null2String(recordSet.getString("lastname")),
+                    Util.null2String(recordSet.getString("departmentcode")),
+                    FORBIDDEN
+            );
+            if (user.getEmployeeCode().equals(""))
+                supezetLog.log("员工id=>"+id+"姓名"+user.getLoginName()+"的员工编号为空,请维护");
+            else
+                users.put(id,user);
+        }
+        return users.size();
+    }
+
+    private Integer syncPeople() throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
         String userString;
         try {
@@ -105,6 +152,18 @@ public class SyncUserTraining extends BaseCronJob {
 
             Response response = new OkHttpClient().newBuilder().build().newCall(request).execute();
             JSONObject rtnJson = new JSONObject(response.body().string());
+
+//            JSONObject rtnJson = new JSONObject(
+//                    "{\n" +
+//                            "    \"status\": \"DATA_INVALID\",\n" +
+//                            "    \"success\": true,\n" +
+//                            "    \"successCount\": 1,\n" +
+//                            "    \"successData\": [\n" +
+//                            "        \"zhangsan\"\n" +
+//                            "    ],\n" +
+//                            "    \"failCount\": {\"employeeCode1\":[\"errorInfo1_1\",\"errorInfo1_2\"],\"employeeCode2\":[\"errorInfo2_1\",\"errorInfo2_2\"]}" +
+//                            "}"
+//            );
             supezetLog.log("请求报文=>"+json.toString());
             supezetLog.log("接口调用成功返回=>"+rtnJson);
             String status = rtnJson.getString("status");
@@ -113,31 +172,56 @@ public class SyncUserTraining extends BaseCronJob {
                 case "OK":
                     break;
                 case "ERROR":
-                    errorMessage = rtnJson.getString("errorMessage");
+                    errorMessage = rtnJson.getJSONArray("errorMessage").toString();
                 case "DATA_INVALID":
                     failMessages = rtnJson.getJSONObject("failCount");
             }
             return successCount;
-        } catch (JSONException | IOException e) {
+        } catch (Exception e) {
             supezetLog.log("json添加失败"+e.getMessage());
             throw e;
         }
     }
 
     private void updateRecord() {
-        AtomicInteger updateCount = new AtomicInteger();
+        LocalDate localDate = LocalDate.now();
+        LocalTime localTime =  LocalTime.now();
+        String timeFormat = localTime.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        String dateFormat = localDate.toString();
+        AtomicInteger updateCount = new AtomicInteger(0);
+        AtomicInteger deleteCount = new AtomicInteger(0);
         users.forEach((id, user) -> {
-            if (failMessages == null || !failMessages.has(user.getEmployeeCode())) {
-                String name = user.getLoginName();
-                String sql = "INSERT INTO [uf_transLogin] ([formmodeid], [modedatacreater], [modedatacreatertype], [modedatacreatedate], [modedatacreatetime], [ry], [dlm]) VALUES (116, 1, 0, 03 20 2024, 03 20 20, " + id + ", '"+ name +"')";
-                supezetLog.log("更新人员编号=>"+id+"姓名=>"+name+"sql语句=>"+sql);
-                recordSet.execute(sql);
-                updateCount.addAndGet(recordSet.getUpdateCount());
+            String name = user.getLoginName();
+            String employeeCode = user.getEmployeeCode();
+            String accountStatus = user.getAccountStatus();
+            if (failMessages == null || !failMessages.has(employeeCode)) {
+                if (accountStatus.equals(ENABLE)) {
+                    String sql = "INSERT INTO [uf_transLogin] ([formmodeid], [modedatacreater], [modedatacreatertype], [modedatacreatedate], [modedatacreatetime], [ry], [dlm]) VALUES (116, 1, 0, '"+timeFormat+"', '"+dateFormat+"', " + id + ", '" + name + "')";
+                    supezetLog.log("人员编号=>" + id + "姓名=>" + name + "sql语句=>" + sql);
+                    recordSet.executeUpdate(sql);
+                    updateCount.addAndGet(1);
+                } else if (accountStatus.equals(FORBIDDEN)){
+                    String sql = "delete from [uf_transLogin] where ry = " + id;
+                    supezetLog.log("人员编号=>" + id + "姓名=>" + name + "sql语句=>" + sql);
+                    recordSet.execute(sql);
+                    deleteCount.addAndGet(1);
+                }
+            } else {
+                try {
+                    supezetLog.log("人员编号=>"+id+"姓名=>"+name+"同步失败原因=>"+failMessages.getJSONArray(employeeCode).toString());
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
         supezetLog.log("总计添加"+updateCount.toString()+"条数据");
+        supezetLog.log("总计删除"+deleteCount.toString()+"条数据");
     }
 
+    @Override
+    public String getVersion() {
+        return "Version-TestNoHttp-NewTimeAndStop2";
+    }
 
 
     public static class User {
@@ -162,12 +246,12 @@ public class SyncUserTraining extends BaseCronJob {
 //        String rank;
 //        String onBoarding;
 
-        public User(String employeeCode, String lastname, String organizeCode) {
+        public User(String employeeCode, String lastname, String organizeCode, String accountStatus) {
             this.employeeCode = employeeCode;
             this.corpCode = CORP_CODE;
             this.userName = lastname;
             this.loginName = lastname;
-            this.accountStatus = "ENABLE";
+            this.accountStatus = accountStatus;
             this.organizeCode = organizeCode;
         }
 
@@ -225,4 +309,6 @@ public class SyncUserTraining extends BaseCronJob {
             return this;
         }
     }
+
+
 }
