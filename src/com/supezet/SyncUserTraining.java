@@ -34,7 +34,7 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
     public static final String CORP_CODE = "supezet";
     public static final String APP_KEY = "FAAF846F1EA5450E8D71B9B2E948AFC5";
     public static final String SIGN = "2F6B226E1A114163A07CA5F18026FCB3";
-    public static final String api = "https://supezet.21tb.com"+"/v1/uc/user/syncUsersVer2";
+    public static final String api = "https://supezet.21tb.com/open/v1/uc/user/syncUsersVer2.html";
     public static final String FORBIDDEN = "FORBIDDEN";
     public static final String ENABLE = "Enable";
 
@@ -147,9 +147,10 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
             MediaType mediaType = MediaType.parse("application/json");
             RequestBody body = RequestBody.create(mediaType, json.toString());
             Request request = new Request.Builder().url(api)
-                    .method("Post",body)
+                    .method("POST",body)
                     .addHeader("Content-Type", "application/json").build();
-
+            supezetLog.log("api:"+api);
+            supezetLog.log("请求报文=>"+json.toString());
             Response response = new OkHttpClient().newBuilder().build().newCall(request).execute();
             JSONObject rtnJson = new JSONObject(response.body().string());
 
@@ -164,7 +165,7 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
 //                            "    \"failCount\": {\"employeeCode1\":[\"errorInfo1_1\",\"errorInfo1_2\"],\"employeeCode2\":[\"errorInfo2_1\",\"errorInfo2_2\"]}" +
 //                            "}"
 //            );
-            supezetLog.log("请求报文=>"+json.toString());
+
             supezetLog.log("接口调用成功返回=>"+rtnJson);
             String status = rtnJson.getString("status");
             int successCount = rtnJson.getInt("successCount");
@@ -220,7 +221,7 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
 
     @Override
     public String getVersion() {
-        return "Version-TestNoHttp-NewTimeAndStop2";
+        return "Version-Test-Http-6";
     }
 
 
