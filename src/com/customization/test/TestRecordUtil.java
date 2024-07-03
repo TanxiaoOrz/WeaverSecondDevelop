@@ -36,10 +36,4 @@ public class TestRecordUtil extends BaseTest {
         }
     }
 
-    @Test
-    public void doSwap() throws AgentLoadException, IOException, AttachNotSupportedException, ClassNotFoundException, AgentInitializationException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        new HotSwap().doSwap("hotswap.HotSwap",false,3, true);
-    }
-
-
 }

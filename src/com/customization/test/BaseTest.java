@@ -29,5 +29,16 @@ public class BaseTest {
 		Console.log( hostname);
 	}
 
+	public static void main(String[] args) {
+		StringBuilder str = new StringBuilder();
+		int a = 1;
+		do {
+			str.append(",[a").append(a).append("]");
+			a++;
+		}while (a<260);
+
+		System.out.println(str.substring(1));
+	}
+
 
 }
