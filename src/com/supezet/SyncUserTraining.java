@@ -8,13 +8,11 @@ import okhttp3.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 import weaver.conn.RecordSet;
-import weaver.general.LocateUtil;
 import weaver.general.Util;
 import weaver.interfaces.schedule.BaseCronJob;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -33,10 +31,12 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
      */
     public static final String CORP_CODE = "supezet";
     public static final String APP_KEY = "FAAF846F1EA5450E8D71B9B2E948AFC5";
-    public static final String SIGN = "2F6B226E1A114163A07CA5F18026FCB3";
-    public static final String api = "https://supezet.21tb.com/open/v1/uc/user/syncUsersVer2.html";
+
+    public static final String API = "https://v4.21tb.com/open/v1/uc/user/syncUsersVer2.html";
+
+    public static final String REQUEST_URI = "/v1/uc/user/syncUsersVer2";
     public static final String FORBIDDEN = "FORBIDDEN";
-    public static final String ENABLE = "Enable";
+    public static final String ENABLE = "ENABLE";
 
 
     private RecordSet recordSet;
@@ -73,7 +73,7 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
             supezetLog.log("成功同步人员共有" + successCount + "个");
             if (errorMessage != null) {
                 supezetLog.log("同步出错,errorMessage=>" + errorMessage);
-            } else if (successCount > 0) {
+            } else {
                 updateRecord();
             }
         } else {
@@ -97,15 +97,14 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
                     ENABLE
             );
             if (user.getEmployeeCode().equals(""))
-                supezetLog.log("员工id=>"+id+"姓名"+user.getLoginName()+"的员工编号为空,请维护");
-            else
-                users.put(id,user);
+                user.setEmployeeCode(id.toString());
+            users.put(id,user);
         }
         return users.size();
     }
 
     private int getDeletePeople() {
-        final String sql = "select h.id,h.workcode,h.lastname,d.departmentcode from" +
+        final String sql = "select h.id,h.workcode,h.lastname,d.departmentcode,h.departmentid from" +
                 "(SELECT hrm.id,hrm.workcode,hrm.departmentid,hrm.lastname from HrmResource as hrm" +
                 " left join uf_transLogin as login on hrm.id = login.ry where ry is not null and status in (4, 5))" +
                 " as h left join hrmdepartment as d on h.departmentid = d.id";
@@ -120,9 +119,10 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
                     FORBIDDEN
             );
             if (user.getEmployeeCode().equals(""))
-                supezetLog.log("员工id=>"+id+"姓名"+user.getLoginName()+"的员工编号为空,请维护");
-            else
-                users.put(id,user);
+                user.setEmployeeCode(id.toString());
+            if (user.getOrganizeCode().equals(""))
+                user.setOrganizeCode(Util.null2String(recordSet.getString("departmentid")));
+            users.put(id,user);
         }
         return users.size();
     }
@@ -142,18 +142,21 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
             json.put("users",userString);
             json.put("updatePassword",false);
             json.put("appKey_", APP_KEY);
-            json.put("sign_", SIGN);
+            json.put("sign_", SupezetTrainUtils.getSign(REQUEST_URI));
             json.put("timestamp_",String.valueOf(System.currentTimeMillis()));
-            MediaType mediaType = MediaType.parse("application/json");
+            OkHttpClient client = new OkHttpClient().newBuilder()
+                    .build();
+            MediaType mediaType = MediaType.parse("application/json, charset=utf-8");
             RequestBody body = RequestBody.create(mediaType, json.toString());
-            Request request = new Request.Builder().url(api)
-                    .method("POST",body)
-                    .addHeader("Content-Type", "application/json").build();
-            supezetLog.log("api:"+api);
             supezetLog.log("请求报文=>"+json.toString());
-            Response response = new OkHttpClient().newBuilder().build().newCall(request).execute();
+            Request request = new Request.Builder()
+                    .url(API)
+                    .method("POST", body)
+                    .addHeader("Content-Type", "application/json")
+                    .build();
+            Response response = client.newCall(request).execute();
             JSONObject rtnJson = new JSONObject(response.body().string());
-
+//
 //            JSONObject rtnJson = new JSONObject(
 //                    "{\n" +
 //                            "    \"status\": \"DATA_INVALID\",\n" +
@@ -162,20 +165,23 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
 //                            "    \"successData\": [\n" +
 //                            "        \"zhangsan\"\n" +
 //                            "    ],\n" +
-//                            "    \"failCount\": {\"employeeCode1\":[\"errorInfo1_1\",\"errorInfo1_2\"],\"employeeCode2\":[\"errorInfo2_1\",\"errorInfo2_2\"]}" +
+//                            "    \"failData\": {\"employeeCode1\":[\"errorInfo1_1\",\"errorInfo1_2\"],\"employeeCode2\":[\"errorInfo2_1\",\"errorInfo2_2\"]}" +
 //                            "}"
 //            );
 
             supezetLog.log("接口调用成功返回=>"+rtnJson);
             String status = rtnJson.getString("status");
-            int successCount = rtnJson.getInt("successCount");
+            int successCount = 0;
+            try {
+                successCount = rtnJson.getInt("successCount");
+            } catch (Exception ignored) {}
             switch (status) {
                 case "OK":
                     break;
                 case "ERROR":
                     errorMessage = rtnJson.getJSONArray("errorMessage").toString();
                 case "DATA_INVALID":
-                    failMessages = rtnJson.getJSONObject("failCount");
+                    failMessages = rtnJson.getJSONObject("failData");
             }
             return successCount;
         } catch (Exception e) {
@@ -197,7 +203,7 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
             String accountStatus = user.getAccountStatus();
             if (failMessages == null || !failMessages.has(employeeCode)) {
                 if (accountStatus.equals(ENABLE)) {
-                    String sql = "INSERT INTO [uf_transLogin] ([formmodeid], [modedatacreater], [modedatacreatertype], [modedatacreatedate], [modedatacreatetime], [ry], [dlm]) VALUES (116, 1, 0, '"+timeFormat+"', '"+dateFormat+"', " + id + ", '" + name + "')";
+                    String sql = "INSERT INTO [uf_transLogin] ([formmodeid], [modedatacreater], [modedatacreatertype], [modedatacreatetime], [modedatacreatedate], [ry], [dlm]) VALUES (116, 1, 0, '"+timeFormat+"', '"+dateFormat+"', " + id + ", '" + name + "')";
                     supezetLog.log("人员编号=>" + id + "姓名=>" + name + "sql语句=>" + sql);
                     recordSet.executeUpdate(sql);
                     updateCount.addAndGet(1);
@@ -211,7 +217,7 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
                 try {
                     supezetLog.log("人员编号=>"+id+"姓名=>"+name+"同步失败原因=>"+failMessages.getJSONArray(employeeCode).toString());
                 } catch (JSONException e) {
-                    throw new RuntimeException(e);
+                    supezetLog.log(e.getMessage());
                 }
             }
         });
@@ -221,7 +227,7 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
 
     @Override
     public String getVersion() {
-        return "Version-Test-Http-6";
+        return "TEST-CLEAN-4";
     }
 
 

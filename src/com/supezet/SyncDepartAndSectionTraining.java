@@ -12,6 +12,8 @@ import weaver.general.Util;
 import weaver.interfaces.schedule.BaseCronJob;
 
 import java.io.IOException;
+import java.net.URL;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -33,11 +35,10 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
 
     public static final String CORP_CODE = "supezet";
     public static final String APP_KEY = "FAAF846F1EA5450E8D71B9B2E948AFC5";
-    public static final String SIGN = "2F6B226E1A114163A07CA5F18026FCB3";
-    public static final String api = "https://supezet.21tb.com/open/v1/uc/organize/syncOrganizeVer2.html";
-    public static final String FORBIDDEN = "FORBIDDEN";
+    public static final String API = "https://v4.21tb.com/open/v1/uc/organize/syncOrganizeVer2.html";
+    public static final String REQUEST_URI = "/v1/uc/organize/syncOrganizeVer2";
 
-    public static final String ROOT_CODE = "ZR";
+    public static final String ROOT_CODE = "ZR001"; // 根组织代号自己定即可,测试时练习卓然人员修改
 
     private HashMap<Integer, Organization> organizations;
     private RecordSet recordSetD;
@@ -66,7 +67,7 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
             supezetLog.log("成功同步组织共有" + successCount + "个");
             if (errorMessage != null) {
                 supezetLog.log("同步出错,errorMessage=>" + errorMessage);
-            } else if (successCount > 0) {
+            } else {
                 updateRecord();
             }
         } else {
@@ -74,11 +75,11 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
         }
     }
 
-    private int syncOrganization() throws JSONException, IOException {
+    private int syncOrganization() throws JSONException, IOException, NoSuchAlgorithmException {
         ObjectMapper objectMapper = new ObjectMapper();
-        String userString;
+        String organizes;
         try {
-            userString = objectMapper.writeValueAsString(organizations.values());
+            organizes = objectMapper.writeValueAsString(organizations.values());
         } catch (JsonProcessingException e) {
             supezetLog.log("字符串转换失败"+e.getMessage());
             throw e;
@@ -86,32 +87,48 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
         JSONObject json = new JSONObject();
 
         try {
-            json.put("users",userString);
+            json.put("organizes",organizes);
             json.put("appKey_", APP_KEY);
-            json.put("sign_", SIGN);
+            json.put("sign_", SupezetTrainUtils.getSign(REQUEST_URI));
             json.put("timestamp_",String.valueOf(System.currentTimeMillis()));
-            MediaType mediaType = MediaType.parse("application/json");
+            OkHttpClient client = new OkHttpClient().newBuilder()
+                    .build();
+            MediaType mediaType = MediaType.parse("application/json, charset=utf-8");
             RequestBody body = RequestBody.create(mediaType, json.toString());
-            Request request = new Request.Builder().url(api)
-                    .method("POST",body)
-                    .addHeader("Content-Type", "application/json").build();
-            supezetLog.log("api:"+api);
             supezetLog.log("请求报文=>"+json.toString());
-            Response response = new OkHttpClient().newBuilder().build().newCall(request).execute();
+            Request request = new Request.Builder()
+                    .url(API)
+                    .method("POST", body)
+                    .addHeader("Content-Type", "application/json")
+                    .build();
+            Response response = client.newCall(request).execute();
             JSONObject rtnJson = new JSONObject(response.body().string());
 
-
+//            JSONObject rtnJson = new JSONObject(
+//                    "{\n" +
+//                            "    \"status\": \"DATA_INVALID\",\n" +
+//                            "    \"success\": true,\n" +
+//                            "    \"successCount\": 1,\n" +
+//                            "    \"successData\": [\n" +
+//                            "        \"zhangsan\"\n" +
+//                            "    ],\n" +
+//                            "    \"failData\": {\"employeeCode1\":[\"errorInfo1_1\",\"errorInfo1_2\"],\"employeeCode2\":[\"errorInfo2_1\",\"errorInfo2_2\"]}" +
+//                            "}"
+//            );
 
             supezetLog.log("接口调用成功返回=>"+rtnJson);
             String status = rtnJson.getString("status");
-            int successCount = rtnJson.getInt("successCount");
+            int successCount = 0;
+            try {
+                successCount = rtnJson.getInt("successCount");
+            } catch (Exception ignored) {}
             switch (status) {
                 case "OK":
                     break;
                 case "ERROR":
                     errorMessage = rtnJson.getJSONArray("errorMessage").toString();
                 case "DATA_INVALID":
-                    failMessages = rtnJson.getJSONObject("failCount");
+                    failMessages = rtnJson.getJSONObject("failData");
             }
             return successCount;
         } catch (Exception e) {
@@ -134,92 +151,93 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
             String sql;
             if (failMessages == null || !failMessages.has(organizeCode)) {
                 switch (type) {
-                    case 0: // 部门
-                        sql = "insert into uf_trainSectionLog ([formmodeid], [modedatacreater], [modedatacreatertype], [modedatacreatedate], [modedatacreatetime], [fb], [sj]) values (126,1,0,'"+timeFormat+"', '"+dateFormat+"', " + id + ", '" + dateFormat + "')";
+                    case 1: // 部门
+                        sql = "insert into uf_trainSectionLog ([formmodeid], [modedatacreater], [modedatacreatertype], [modedatacreatetime], [modedatacreatedate], [fb], [sj]) values (126,1,0,'"+timeFormat+"', '"+dateFormat+"', " + id + ", '" + dateFormat + "')";
                         supezetLog.log("分部编号=>" + id + "名称=>" + organizeName + "sql语句=>" + sql);
                         break;
-                    case 1: // 分部
-                        sql = "insert into uf_trainDepartLog ([formmodeid], [modedatacreater], [modedatacreatertype], [modedatacreatedate], [modedatacreatetime], [bm], [sj]) values (126,1,0,'"+timeFormat+"', '"+dateFormat+"', " + id + ", '" + dateFormat + "')";
+                    case 0: // 分部
+                        sql = "insert into uf_trainDepartLog ([formmodeid], [modedatacreater], [modedatacreatertype], [modedatacreatetime], [modedatacreatedate], [bm], [sj]) values (125,1,0,'"+timeFormat+"', '"+dateFormat+"', " + id + ", '" + dateFormat + "')";
                         supezetLog.log("部门编号=>" + id + "名称=>" + organizeName + "sql语句=>" + sql);
                         break;
                     default:
                         sql = "";
                 }
-                recordSetD.executeUpdate(sql);
+                recordSetD.execute(sql);
                 updateCount.addAndGet(1);
             } else {
                 try {
                     supezetLog.log("编号=>"+id+"姓名=>"+organizeName+"同步失败原因=>"+failMessages.getJSONArray(organizeCode).toString());
                 } catch (JSONException e) {
-                    throw new RuntimeException(e);
+                    supezetLog.log(e.getMessage());
                 }
             }
-            supezetLog.log("总计添加"+updateCount.toString()+"条数据");
         });
+        supezetLog.log("总计添加"+updateCount.toString()+"条数据");
     }
 
     public int getAddOrganization() {
         final String sqlDepart =
-                """
-                SELECT
-                    departInformtaion.*\s
-                FROM
-                    (
-                    SELECT
-                        depart.id,
-                        depart.departmentname,
-                        sub.subcompanycode,
-                        depart.leadDcode,
-                        depart.departmentcode\s
-                    FROM
-                        (
-                        SELECT
-                            md.id,
-                            md.departmentname,
-                            md.subcompanyid1,
-                            subd.departmentcode AS leadDcode,
-                            md.departmentcode\s
-                        FROM
-                            HrmDepartment AS md
-                            LEFT JOIN HrmDepartment AS subd ON md.supdepid = subd.id\s
-                        WHERE
-                            md.canceled != 1\s
-                            OR md.canceled IS NULL\s
-                        ) AS depart
-                        LEFT JOIN HrmSubCompany AS sub ON depart.subcompanyid1 = sub.id\s
-                    ) AS departInformtaion
-                    LEFT JOIN uf_trainDepartLog AS logs ON departInformtaion.id = logs.bm\s
-                WHERE
-                    logs.id IS NULL        
-                """;
+                "SELECT\n" +
+                "    departInformtaion.* \n" +
+                "FROM\n" +
+                "    (\n" +
+                "    SELECT\n" +
+                "        depart.id,\n" +
+                "        depart.departmentname,\n" +
+                "        sub.subcompanycode,\n" +
+                "        depart.leadDcode,\n" +
+                "        depart.departmentcode,\n" +
+                "        depart.supdepid ,\n" +
+                "        depart.subcompanyid1 \n" +
+                "    FROM\n" +
+                "        (\n" +
+                "        SELECT\n" +
+                "            md.id,\n" +
+                "            md.departmentname,\n" +
+                "            md.subcompanyid1,\n" +
+                "            subd.departmentcode AS leadDcode,\n" +
+                "            md.departmentcode,\n" +
+                "            md.supdepid \n" +
+                "        FROM\n" +
+                "            HrmDepartment AS md\n" +
+                "            LEFT JOIN HrmDepartment AS subd ON md.supdepid = subd.id \n" +
+                "        WHERE\n" +
+                "            md.canceled != 1 \n" +
+                "            OR md.canceled IS NULL \n" +
+                "        ) AS depart\n" +
+                "        LEFT JOIN HrmSubCompany AS sub ON depart.subcompanyid1 = sub.id \n" +
+                "    ) AS departInformtaion\n" +
+                "    LEFT JOIN uf_trainDepartLog AS logs ON departInformtaion.id = logs.bm \n" +
+                "WHERE\n" +
+                "    logs.id IS NULL";
         recordSetD.execute(sqlDepart);
 
-        String sqlSection = """
-                SELECT
-                	sections.*\s
-                FROM
-                	(
-                	SELECT
-                		ms.id,
-                		ms.subcompanyname,
-                		ms.subcompanycode,
-                		ss.subcompanycode AS leadCode\s
-                	FROM
-                		hrmsubcompany AS ms
-                		LEFT JOIN hrmsubcompany AS ss ON ms.supsubcomid = ss.id\s
-                	WHERE
-                		ms.canceled != 1\s
-                		OR ms.canceled IS NULL\s
-                	) AS sections
-                	LEFT JOIN uf_trainSectionLog AS logs ON sections.id = logs.fb\s
-                WHERE
-                	logs.id IS NULL
-                """;
+        String sqlSection =
+                "SELECT\n" +
+                "    sections.* \n" +
+                "FROM\n" +
+                "    (\n" +
+                "    SELECT\n" +
+                "        ms.id,\n" +
+                "        ms.subcompanyname,\n" +
+                "        ms.subcompanycode,\n" +
+                "        ss.subcompanycode AS leadCode,\n" +
+                "        ms.supsubcomid \n" +
+                "    FROM\n" +
+                "        hrmsubcompany AS ms\n" +
+                "        LEFT JOIN hrmsubcompany AS ss ON ms.supsubcomid = ss.id \n" +
+                "    WHERE\n" +
+                "        ms.canceled != 1 \n" +
+                "        OR ms.canceled IS NULL \n" +
+                "    ) AS sections\n" +
+                "    LEFT JOIN uf_trainSectionLog AS logs ON sections.id = logs.fb \n" +
+                "WHERE\n" +
+                "    logs.id IS NULL";
         recordSetS.execute(sqlSection);
         organizations = new HashMap<>(recordSetD.getCounts() + recordSetS.getCounts());
 
         while (recordSetS.next()) {
-            Integer id = Util.getIntValue(recordSetS.getInt("id")) * 2 +1;
+            Integer id =Util.getIntValue(recordSetS.getInt("id"))  * 2 +1;
             String leadCode = Util.null2String(recordSetS.getString("leadCode"));
             Organization organization = new Organization(
                     Util.null2String(recordSetS.getString("subcompanycode")),
@@ -227,23 +245,30 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
                     leadCode.equals("")?ROOT_CODE:leadCode
             );
             if (organization.getOrganizeCode().equals(""))
-                supezetLog.log("分部id=>"+id+"名称"+organization.getOrganizeName()+"的分部编号为空,请维护");
-            else
-                organizations.put(id,organization);
+                organization.setParentCode(id.toString());
+            if (organization.getParentCode().equals(""))
+                organization.setOrganizeCode(Util.null2String(recordSetS.getString("supsubcomid")));
+            organizations.put(id,organization);
         }
 
         while (recordSetD.next()) {
             Integer id = Util.getIntValue(recordSetD.getInt("id")) * 2;
             String leadCode = Util.null2String(recordSetD.getString("leadDCode"));
+            if (leadCode.equals(""))
+                leadCode = Util.null2String(recordSetD.getString("supdepid"));
+            if (leadCode.equals(""))
+                leadCode = Util.null2String(recordSetD.getString("subcompanycode"));
+            if (leadCode.equals(""))
+                leadCode = Util.null2String(recordSetD.getString("subcompanyid1"));
+
             Organization organization = new Organization(
                     Util.null2String(recordSetD.getString("departmentcode")),
                     Util.null2String(recordSetD.getString("departmentname")),
-                    leadCode.equals("")?Util.null2String(recordSetD.getString("subcompanycode")):leadCode
+                    leadCode
             );
             if (organization.getOrganizeCode().equals(""))
-                supezetLog.log("部门id=>"+id+"名称"+organization.getOrganizeName()+"的部门编号为空,请维护");
-            else
-                organizations.put(id,organization);
+                organization.setOrganizeCode(id.toString());
+            organizations.put(id,organization);
         }
 
         return organizations.size();
@@ -251,13 +276,8 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
 
     @Override
     public String getVersion() {
-        return "develop";
+        return "TEST-CLEAN-6";
     }
-
-
-//    public int getDeleteOrganization() {
-//
-//    }
 
     /**
      * 组织类
@@ -286,9 +306,9 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
             this.organizeCode = organizeCode;
             this.organizeName = organizeName;
             if (Util.null2String(parentCode).equals(""))
-                this.parentCode = parentCode;
-            else
                 this.parentCode = "*";
+            else
+                this.parentCode = parentCode;
             this.corpCode = CORP_CODE;
         }
 
@@ -327,5 +347,19 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
             this.corpCode = corpCode;
             return this;
         }
+    }
+
+    public static void main(String[] args) throws IOException {
+        OkHttpClient client = new OkHttpClient().newBuilder()
+                .build();
+        MediaType mediaType = MediaType.parse("application/json, charset=utf-8");
+        RequestBody body = RequestBody.create(mediaType, "{\"timestamp_\":\"1719997663629\",\"sign_\":\"20820D5B33CB7DC3C086F65AF7E6C96A\",\"appKey_\":\"FAAF846F1EA5450E8D71B9B2E948AFC5\",\"organizes\":\"[{\\\"organizeCode\\\":\\\"586\\\",\\\"organizeName\\\":\\\"测试部门\\\",\\\"parentCode\\\":\\\"ZH050500\\\",\\\"corpCode\\\":\\\"supezet\\\"}]\"}");
+        Request request = new Request.Builder()
+                .url("https://v4.21tb.com/open/v1/uc/organize/syncOrganizeVer2.html")
+                .method("POST", body)
+                .addHeader("Content-Type", "application/json")
+                .build();
+        Response response = client.newCall(request).execute();
+        System.out.println("response.body().string() = " + response.body().string());
     }
 }

@@ -81,7 +81,7 @@ public class AuthGuangHua {
     private String getParam(String userName) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         String timeStamp = String.valueOf(System.currentTimeMillis());
         String plaintext = secret + "|sso|" + corpCode + "|" + userName + "|" + timeStamp + "|" + secret;
-        String ciphertext = md5(plaintext);
+        String ciphertext = SupezetTrainUtils.md5(plaintext);
         String param = "?userName=" + URLEncoder.encode(userName,"utf-8") + "&timestamp=" + timeStamp + "&corpCode=" + corpCode + "&sign=" + ciphertext;
         supezetLog.log("用户名 = "+userName+" 获取访问培训系统参数");
         supezetLog.log("时间戳 = "+timeStamp);
@@ -91,31 +91,6 @@ public class AuthGuangHua {
         return param;
     }
 
-    /**
-     * md5加密
-     * @param input 明文
-     * @return md5密文
-     * @throws NoSuchAlgorithmException 一般不会出现
-     */
-    private static String md5(String input) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("MD5");
-        md.update(input.getBytes(StandardCharsets.UTF_8));
-        return toHaxString(md.digest());
-    }
 
-    /**
-     * 将byte数组转化成16进制字符串
-     * @param digest 字符串byte数组
-     * @return 十六进制字符串
-     */
-    private static String toHaxString(byte[] digest) {
-        StringBuilder s = new StringBuilder(digest.length * 2);
-        for (byte b:
-             digest) {
-            s.append(HEX_DIGITS[b >> 4 & 0x0F] );
-            s.append(HEX_DIGITS[b & 0x0F]);
-        }
-        return s.toString();
-    }
 
 }
