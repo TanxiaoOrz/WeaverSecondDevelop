@@ -41,38 +41,25 @@ public class HotSwap extends AbstractModeExpandJavaCodeNew {
     }
 
 
-    public void doSwap(String classPath, boolean isVersion, int id, boolean test) throws NoSuchMethodException, IOException, AttachNotSupportedException, ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException, AgentLoadException, AgentInitializationException {
+    public void doSwap(String classPath, boolean isVersion, int id, boolean test) throws NoSuchMethodException, ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException {
         if (isVersion)
             printVersion(classPath);
-        String currentPID = locateCurrentPID();
-        VirtualMachine virtualMachine = VirtualMachine.attach(currentPID);
-        String virtualPath;
-        String filePath;
-        if (test) {
-            virtualPath = root + "hotswap" + File.separatorChar + "Agent.jar";
-            filePath = "D:\\ProgramCode\\WeaverSecondDevelop\\out\\production\\WeaverSecondDevelop\\" + classPath.replace('.', File.separatorChar)+".class";
-        }
-        else {
-            virtualPath = root + "classbean" + File.separatorChar + "hotswap" + File.separatorChar + "Agent.jar";
-            filePath = root + "classbean" + File.separatorChar + classPath.replace('.', File.separatorChar) + ".class";
-        }
-        Console.log(virtualPath);
-        Console.log(filePath);
-        String arg = classPath + ";" + filePath + ";" + (isVersion ? 0 : 1);
-        virtualMachine.loadAgent(virtualPath, arg);
-        Console.log("hotswap start classpath: " + classPath);
-        virtualMachine.detach();
+        String filePath = root + "classbean" + File.separatorChar + classPath.replace('.', File.separatorChar) + ".class";
+        Console.log("filePath = " + filePath);
+        Console.log("classPath = " + classPath);
+        Console.log("isVersion = " + isVersion);
+
+        AgentProxy.getInstance().hotSwap(classPath,filePath);
+
         if (isVersion) {
             String version = printVersion(classPath);
             String now =  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             String sql = "update uf_hotswapList set currentVersion = '" + version + "', lastUpdateTime = '" + now +"' where id = " + id;
-            System.out.println("sql = " + sql);
             Console.log(sql);
             new RecordSet().execute(sql);
         } else {
             String now =  LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             String sql = "update uf_hotswapList set lastUpdateTime = '" + now +"' where id = " + id;
-            System.out.println("sql = " + sql);
             Console.log(sql);
             new RecordSet().execute(sql);
         }
