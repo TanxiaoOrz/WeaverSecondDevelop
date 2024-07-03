@@ -24,11 +24,6 @@ public class AgentProxy {
 
     private Instrumentation instrumentation = null;
 
-    public AgentProxy setInstrumentation(Instrumentation instrumentation) {
-        this.instrumentation = instrumentation;
-        return this;
-    }
-
     public synchronized void hotSwap(String classPath, String filePath) {
         try {
             byte[] bytes = getBytes(filePath);
@@ -73,11 +68,20 @@ public class AgentProxy {
     public static final String root = GCONST.getRootPath();
 
     private AgentProxy() throws Exception {
-        String currentPID = HotSwapUtils.locateCurrentPID();
-        VirtualMachine virtualMachine = VirtualMachine.attach(currentPID);
-        String virtualPath = root + "classbean" + File.separatorChar + "hotswap" + File.separatorChar + "Agent.jar";
-        Console.log(virtualPath);
-        virtualMachine.loadAgent(virtualPath);
+        initial();
+    }
+
+    private void initial() {
+        try {
+            String currentPID = HotSwapUtils.locateCurrentPID();
+            VirtualMachine virtualMachine = VirtualMachine.attach(currentPID);
+            String virtualPath = root + "classbean" + File.separatorChar + "hotswap" + File.separatorChar + "Agent.jar";
+            Console.log(virtualPath);
+            virtualMachine.loadAgent(virtualPath);
+        }catch (Exception e) {
+            Console.log(e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public static synchronized AgentProxy getInstance() {
@@ -90,6 +94,10 @@ public class AgentProxy {
             }
         }
         return agentProxy;
+    }
+
+    public static void setInstrumentation(Instrumentation instrumentation) {
+        agentProxy.instrumentation = instrumentation;
     }
 
 }
