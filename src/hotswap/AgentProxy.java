@@ -30,6 +30,7 @@ public class AgentProxy {
             Class<?> toSwap = getClazz(classPath, instrumentation);
             ClassDefinition classDefinition = new ClassDefinition(toSwap, bytes);
             instrumentation.redefineClasses(classDefinition);
+            Console.log("hotswap success");
         } catch (Exception e) {
             Console.log(e.getMessage());
         }
@@ -72,6 +73,10 @@ public class AgentProxy {
     }
 
     private void initial() {
+        if (agentProxy == null) {
+            agentProxy = this;
+        }
+
         try {
             String currentPID = HotSwapUtils.locateCurrentPID();
             VirtualMachine virtualMachine = VirtualMachine.attach(currentPID);
@@ -87,7 +92,7 @@ public class AgentProxy {
     public static synchronized AgentProxy getInstance() {
         if (agentProxy == null) {
             try {
-                agentProxy = new AgentProxy();
+                new AgentProxy();
             } catch (Exception e) {
                 Console.log(e.getMessage());
                 e.printStackTrace();
