@@ -41,7 +41,7 @@ public class HotSwap extends AbstractModeExpandJavaCodeNew {
     }
 
 
-    public void doSwap(String classPath, boolean isVersion, int id, boolean test) throws NoSuchMethodException, ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    public void doSwap(String classPath, boolean isVersion, int id, boolean test) throws Exception {
         if (isVersion)
             printVersion(classPath);
         String filePath = root + "classbean" + File.separatorChar + classPath.replace('.', File.separatorChar) + ".class";
@@ -49,7 +49,11 @@ public class HotSwap extends AbstractModeExpandJavaCodeNew {
         Console.log("classPath = " + classPath);
         Console.log("isVersion = " + isVersion);
 
-        AgentProxy.getInstance().hotSwap(classPath,filePath);
+        if (AgentProxy.getInstance() != null) {
+            AgentProxy.getInstance().hotSwap(classPath,filePath);
+        } else {
+            throw new Exception("初次运行,正在加载模块,请稍后再试");
+        }
 
         if (isVersion) {
             String version = printVersion(classPath);
@@ -63,19 +67,6 @@ public class HotSwap extends AbstractModeExpandJavaCodeNew {
             Console.log(sql);
             new RecordSet().execute(sql);
         }
-    }
-
-
-//    public void doSwap(String classPath, boolean isVersion) throws MalformedURLException {
-//        String filePath =root + classPath.replace('.',File.separatorChar);
-//        Console.log("hotswap start class: " + classPath +" file: "+ filePath);
-//        URLClassLoader classLoader = new URLClassLoader(new URL[]{new URL(filePath)});
-//
-//    }
-
-
-    private String locateCurrentPID() {
-        return ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
     }
 
     private String printVersion(String classPath) throws NoSuchMethodException, ClassNotFoundException, InvocationTargetException, InstantiationException, IllegalAccessException {

@@ -71,9 +71,8 @@ public class AgentProxy {
 
     private static AgentProxy agentProxy = null;
     public static final String root = GCONST.getRootPath();
-    public static boolean ready = true;
 
-    private AgentProxy() throws IOException, AttachNotSupportedException, AgentLoadException, AgentInitializationException {
+    private AgentProxy() throws Exception {
         String currentPID = HotSwapUtils.locateCurrentPID();
         VirtualMachine virtualMachine = VirtualMachine.attach(currentPID);
         String virtualPath = root + "classbean" + File.separatorChar + "hotswap" + File.separatorChar + "Agent.jar";
@@ -83,20 +82,14 @@ public class AgentProxy {
 
     public static synchronized AgentProxy getInstance() {
         if (agentProxy == null) {
-            ready = false;
             try {
                 agentProxy = new AgentProxy();
-                while (!ready) {
-                    Thread.sleep(100);
-                }
             } catch (Exception e) {
                 Console.log(e.getMessage());
+                e.printStackTrace();
             }
         }
         return agentProxy;
     }
 
-    public static void setReady(Boolean ready) {
-        AgentProxy.ready = ready;
-    }
 }
