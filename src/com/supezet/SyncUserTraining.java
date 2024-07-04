@@ -60,9 +60,10 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
         recordSet = new RecordSet();
         failMessages = null;
         errorMessage = null;
-        int syncCount = getAddPeople() + getDeletePeople();
-        supezetLog.log("待同步人员共有"+ syncCount +"个");
-        if (syncCount > 0) {
+        getAddPeople();
+        getDeletePeople();
+        supezetLog.log("待同步人员共有"+ users.size() +"个");
+        if (users.size() > 0) {
             int successCount;
             try {
                 successCount = syncPeople();
@@ -82,7 +83,7 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
     }
 
     private int getAddPeople() {
-        final String sql = "select h.id,h.workcode,h.lastname,d.departmentcode from" +
+        final String sql = "select h.id,h.workcode,h.lastname,d.departmentcode,h.departmentid from" +
                 "(SELECT hrm.id,hrm.workcode,hrm.departmentid,hrm.lastname from HrmResource as hrm" +
                 " left join uf_transLogin as login on hrm.id = login.ry where ry is null and status not in (4, 5))" +
                 " as h left join hrmdepartment as d on h.departmentid = d.id";
@@ -93,11 +94,13 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
             User user = new User(
                     Util.null2String(recordSet.getString("workcode")),
                     Util.null2String(recordSet.getString("lastname")),
-                    Util.null2String(recordSet.getString("departmentcode")),
+                    String.valueOf(Util.getIntValue(recordSet.getInt("departmentid"))  * 2),
                     ENABLE
             );
-            if (user.getEmployeeCode().equals(""))
-                user.setEmployeeCode(id.toString());
+            if (user.getEmployeeCode().equals("")) {
+                supezetLog.log("人员" + user.getUserName() + "id=" + id +"没有工号,请维护");
+                continue;
+            }
             users.put(id,user);
         }
         return users.size();
@@ -115,7 +118,7 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
             User user = new User(
                     Util.null2String(recordSet.getString("workcode")),
                     Util.null2String(recordSet.getString("lastname")),
-                    Util.null2String(recordSet.getString("departmentcode")),
+                    String.valueOf(Util.getIntValue(recordSet.getInt("departmentid"))  * 2),
                     FORBIDDEN
             );
             if (user.getEmployeeCode().equals(""))
@@ -227,7 +230,7 @@ public class SyncUserTraining extends BaseCronJob implements VersionControl {
 
     @Override
     public String getVersion() {
-        return "TEST-CLEAN-4";
+        return "TEST-try-2";
     }
 
 

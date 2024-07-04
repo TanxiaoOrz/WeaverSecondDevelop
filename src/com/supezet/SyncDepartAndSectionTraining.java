@@ -12,7 +12,6 @@ import weaver.general.Util;
 import weaver.interfaces.schedule.BaseCronJob;
 
 import java.io.IOException;
-import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -38,7 +37,7 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
     public static final String API = "https://v4.21tb.com/open/v1/uc/organize/syncOrganizeVer2.html";
     public static final String REQUEST_URI = "/v1/uc/organize/syncOrganizeVer2";
 
-    public static final String ROOT_CODE = "ZR001"; // 根组织代号自己定即可,测试时练习卓然人员修改
+    public static final String ROOT_CODE = "*"; // 根组织代号自己定即可,测试时练习卓然人员修改
 
     private HashMap<Integer, Organization> organizations;
     private RecordSet recordSetD;
@@ -152,11 +151,11 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
             if (failMessages == null || !failMessages.has(organizeCode)) {
                 switch (type) {
                     case 1: // 部门
-                        sql = "insert into uf_trainSectionLog ([formmodeid], [modedatacreater], [modedatacreatertype], [modedatacreatetime], [modedatacreatedate], [fb], [sj]) values (126,1,0,'"+timeFormat+"', '"+dateFormat+"', " + id + ", '" + dateFormat + "')";
+                        sql = "insert into uf_trainSectionLog ([formmodeid], [modedatacreater], [modedatacreatertype], [modedatacreatetime], [modedatacreatedate], [fb], [sj]) values (127,1,0,'"+timeFormat+"', '"+dateFormat+"', " + id + ", '" + dateFormat + "')";
                         supezetLog.log("分部编号=>" + id + "名称=>" + organizeName + "sql语句=>" + sql);
                         break;
                     case 0: // 分部
-                        sql = "insert into uf_trainDepartLog ([formmodeid], [modedatacreater], [modedatacreatertype], [modedatacreatetime], [modedatacreatedate], [bm], [sj]) values (125,1,0,'"+timeFormat+"', '"+dateFormat+"', " + id + ", '" + dateFormat + "')";
+                        sql = "insert into uf_trainDepartLog ([formmodeid], [modedatacreater], [modedatacreatertype], [modedatacreatetime], [modedatacreatedate], [bm], [sj]) values (126,1,0,'"+timeFormat+"', '"+dateFormat+"', " + id + ", '" + dateFormat + "')";
                         supezetLog.log("部门编号=>" + id + "名称=>" + organizeName + "sql语句=>" + sql);
                         break;
                     default:
@@ -178,96 +177,84 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
     public int getAddOrganization() {
         final String sqlDepart =
                 "SELECT\n" +
-                "    departInformtaion.* \n" +
-                "FROM\n" +
-                "    (\n" +
-                "    SELECT\n" +
-                "        depart.id,\n" +
-                "        depart.departmentname,\n" +
-                "        sub.subcompanycode,\n" +
-                "        depart.leadDcode,\n" +
-                "        depart.departmentcode,\n" +
-                "        depart.supdepid ,\n" +
-                "        depart.subcompanyid1 \n" +
-                "    FROM\n" +
-                "        (\n" +
-                "        SELECT\n" +
-                "            md.id,\n" +
-                "            md.departmentname,\n" +
-                "            md.subcompanyid1,\n" +
-                "            subd.departmentcode AS leadDcode,\n" +
-                "            md.departmentcode,\n" +
-                "            md.supdepid \n" +
-                "        FROM\n" +
-                "            HrmDepartment AS md\n" +
-                "            LEFT JOIN HrmDepartment AS subd ON md.supdepid = subd.id \n" +
-                "        WHERE\n" +
-                "            md.canceled != 1 \n" +
-                "            OR md.canceled IS NULL \n" +
-                "        ) AS depart\n" +
-                "        LEFT JOIN HrmSubCompany AS sub ON depart.subcompanyid1 = sub.id \n" +
-                "    ) AS departInformtaion\n" +
-                "    LEFT JOIN uf_trainDepartLog AS logs ON departInformtaion.id = logs.bm \n" +
-                "WHERE\n" +
-                "    logs.id IS NULL";
+                        "    departInformtaion.* \n" +
+                        "FROM\n" +
+                        "    (\n" +
+                        "    SELECT\n" +
+                        "        depart.id,\n" +
+                        "        depart.departmentname,\n" +
+                        "        sub.subcompanycode,\n" +
+                        "        depart.leadDcode,\n" +
+                        "        depart.departmentcode,\n" +
+                        "        depart.supdepid ,\n" +
+                        "        depart.subcompanyid1 \n" +
+                        "    FROM\n" +
+                        "        (\n" +
+                        "        SELECT\n" +
+                        "            md.id,\n" +
+                        "            md.departmentname,\n" +
+                        "            md.subcompanyid1,\n" +
+                        "            subd.departmentcode AS leadDcode,\n" +
+                        "            md.departmentcode,\n" +
+                        "            md.supdepid \n" +
+                        "        FROM\n" +
+                        "            HrmDepartment AS md\n" +
+                        "            LEFT JOIN HrmDepartment AS subd ON md.supdepid = subd.id \n" +
+                        "        WHERE\n" +
+                        "            md.canceled != 1 \n" +
+                        "            OR md.canceled IS NULL \n" +
+                        "        ) AS depart\n" +
+                        "        LEFT JOIN HrmSubCompany AS sub ON depart.subcompanyid1 = sub.id \n" +
+                        "    ) AS departInformtaion\n" +
+                        "    LEFT JOIN uf_trainDepartLog AS logs ON departInformtaion.id = logs.bm \n" +
+                        "WHERE\n" +
+                        "    logs.id IS NULL";
         recordSetD.execute(sqlDepart);
 
         String sqlSection =
                 "SELECT\n" +
-                "    sections.* \n" +
-                "FROM\n" +
-                "    (\n" +
-                "    SELECT\n" +
-                "        ms.id,\n" +
-                "        ms.subcompanyname,\n" +
-                "        ms.subcompanycode,\n" +
-                "        ss.subcompanycode AS leadCode,\n" +
-                "        ms.supsubcomid \n" +
-                "    FROM\n" +
-                "        hrmsubcompany AS ms\n" +
-                "        LEFT JOIN hrmsubcompany AS ss ON ms.supsubcomid = ss.id \n" +
-                "    WHERE\n" +
-                "        ms.canceled != 1 \n" +
-                "        OR ms.canceled IS NULL \n" +
-                "    ) AS sections\n" +
-                "    LEFT JOIN uf_trainSectionLog AS logs ON sections.id = logs.fb \n" +
-                "WHERE\n" +
-                "    logs.id IS NULL";
+                        "    sections.* \n" +
+                        "FROM\n" +
+                        "    (\n" +
+                        "    SELECT\n" +
+                        "        ms.id,\n" +
+                        "        ms.subcompanyname,\n" +
+                        "        ms.subcompanycode,\n" +
+                        "        ss.subcompanycode AS leadCode,\n" +
+                        "        ms.supsubcomid \n" +
+                        "    FROM\n" +
+                        "        hrmsubcompany AS ms\n" +
+                        "        LEFT JOIN hrmsubcompany AS ss ON ms.supsubcomid = ss.id \n" +
+                        "    WHERE\n" +
+                        "        ms.canceled != 1 \n" +
+                        "        OR ms.canceled IS NULL \n" +
+                        "    ) AS sections\n" +
+                        "    LEFT JOIN uf_trainSectionLog AS logs ON sections.id = logs.fb \n" +
+                        "WHERE\n" +
+                        "    logs.id IS NULL";
         recordSetS.execute(sqlSection);
         organizations = new HashMap<>(recordSetD.getCounts() + recordSetS.getCounts());
 
         while (recordSetS.next()) {
             Integer id =Util.getIntValue(recordSetS.getInt("id"))  * 2 +1;
-            String leadCode = Util.null2String(recordSetS.getString("leadCode"));
+            String leadCode = Util.null2String(recordSetS.getString("supsubcomid"));
             Organization organization = new Organization(
-                    Util.null2String(recordSetS.getString("subcompanycode")),
+                    id.toString(),
                     Util.null2String(recordSetS.getString("subcompanyname")),
-                    leadCode.equals("")?ROOT_CODE:leadCode
+                    leadCode.equals("0")?ROOT_CODE:String.valueOf(Util.getIntValue(recordSetS.getInt("supsubcomid"))  * 2 +1)
             );
-            if (organization.getOrganizeCode().equals(""))
-                organization.setParentCode(id.toString());
-            if (organization.getParentCode().equals(""))
-                organization.setOrganizeCode(Util.null2String(recordSetS.getString("supsubcomid")));
             organizations.put(id,organization);
         }
 
         while (recordSetD.next()) {
             Integer id = Util.getIntValue(recordSetD.getInt("id")) * 2;
-            String leadCode = Util.null2String(recordSetD.getString("leadDCode"));
-            if (leadCode.equals(""))
-                leadCode = Util.null2String(recordSetD.getString("supdepid"));
-            if (leadCode.equals(""))
-                leadCode = Util.null2String(recordSetD.getString("subcompanycode"));
-            if (leadCode.equals(""))
-                leadCode = Util.null2String(recordSetD.getString("subcompanyid1"));
-
+            String leadCode = Util.null2String(recordSetD.getString("supdepid"));
             Organization organization = new Organization(
-                    Util.null2String(recordSetD.getString("departmentcode")),
+                    id.toString(),
                     Util.null2String(recordSetD.getString("departmentname")),
-                    leadCode
+                    leadCode.equals("0")?String.valueOf(Util.getIntValue(recordSetD.getInt("subcompanyid1"))  * 2 +1):String.valueOf(Util.getIntValue(recordSetD.getInt("supdepid"))  * 2)
             );
-            if (organization.getOrganizeCode().equals(""))
-                organization.setOrganizeCode(id.toString());
+
             organizations.put(id,organization);
         }
 
@@ -276,7 +263,7 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
 
     @Override
     public String getVersion() {
-        return "TEST-CLEAN-6";
+        return "TEST-DEV-1";
     }
 
     /**
@@ -305,10 +292,7 @@ public class SyncDepartAndSectionTraining extends BaseCronJob implements Version
         public Organization(String organizeCode, String organizeName, String parentCode) {
             this.organizeCode = organizeCode;
             this.organizeName = organizeName;
-            if (Util.null2String(parentCode).equals(""))
-                this.parentCode = "*";
-            else
-                this.parentCode = parentCode;
+            this.parentCode = parentCode;
             this.corpCode = CORP_CODE;
         }
 
