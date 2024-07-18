@@ -12,5 +12,8 @@
     <orderEntry type="library" name="junit-4.13.1" level="project" />
     <orderEntry type="library" name="org.hamcrest.core_1.3.0.v201303031735" level="project" />
     <orderEntry type="library" name="WeaverClassBea" level="project" />
+    <orderEntry type="library" name="classbean" level="project" />
+    <orderEntry type="library" name="lib" level="project" />
+    <orderEntry type="library" name="junit-3.8.1" level="project" />
   </component>
 </module>
