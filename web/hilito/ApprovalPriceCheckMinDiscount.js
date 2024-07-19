@@ -5,7 +5,7 @@ jQuery(document).ready(function(){
     const discount_authority_field_detail = WfForm.convertFieldNameToId('zdzklj','detail_1',true)
     const item_number_field = WfForm.convertFieldNameToId("ph","detail_1",true)
     let before = window.checkCustomize;
-    let block;
+    let block = false;
     function afterCheck(){
         let returns
         let alertStatement = ""
@@ -24,7 +24,7 @@ jQuery(document).ready(function(){
             if(rowIndex !== ""){
                 if (WfForm.getFieldValue(discount_authority_field_detail+'_'+rowIndex) == 1) {
                     block = true
-                    alertStatement += "品号为"+WfForm.getFieldValue(item_number_field+'_'+rowIndex)+"的产品低于A级客户价格，请修改后重新提交，谢谢！\n"
+                    alertStatement += "品号为"+WfForm.getFieldValue(item_number_field+'_'+rowIndex)+"的产品低于PE特价，请修改后重新提交，谢谢！\n"
                 }
             }
         }
