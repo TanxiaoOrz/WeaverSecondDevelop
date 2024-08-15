@@ -23,5 +23,5 @@
 %>
 <script>
     alert(<%= alertString%>)
-    window.close()
+    window.history.back();
 </script>
