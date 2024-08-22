@@ -16,7 +16,7 @@
             if (rs.next()) {    //是否已报名且签到
                 int counts = rs.getInt("c");
                 if (counts == 1) {
-                    rs.execute("update uf_pxqdmx qdzt = 2 where pxry = '"+userId+"' and pxkc = '"+ billId +"' and pxrq = concat(CURRENT_DATE,'')");
+                    rs.execute("update uf_pxqdmx set qdzt = 2 where pxry = '"+userId+"' and pxkc = '"+ billId +"' and pxrq = concat(CURRENT_DATE,'')");
 
                     alertString = "签到成功";
                 } else {
