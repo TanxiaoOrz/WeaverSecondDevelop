@@ -11,12 +11,12 @@
     if (rs.next()) {    // 课程是否存在
         int kczt = rs.getInt("kczt");
         if (kczt == 2) {    // 培训中
-            String sql = "select sfqd as c from uf_pxhy_dt1 where bmchry = '"+userId+"' and mainid = '"+ billId +"'";
+            String sql = "select qdzt as c from uf_pxqdmx where pxry = '"+userId+"' and pxkc = '"+ billId +"' and pxrq = concat(CURRENT_DATE,'')";
             rs.execute(sql);
-            if (rs.next()) {    //是否已报名
+            if (rs.next()) {    //是否已报名且签到
                 int counts = rs.getInt("c");
                 if (counts == 1) {
-                    rs.execute("update uf_pxhy_dt1 sfqd = 2 where mainid = '" + billId + "' and bmchry = '" +  userId +"'");
+                    rs.execute("update uf_pxqdmx qdzt = 2 where pxry = '"+userId+"' and pxkc = '"+ billId +"' and pxrq = concat(CURRENT_DATE,'')");
 
                     alertString = "签到成功";
                 } else {

@@ -15,7 +15,7 @@
             rs.execute("insert into uf_pxhy_dt1 (bmchry,sfqd,mainid) value (" + userId + ",0," + billId + ")");
             alertString = " 报名成功";
         } else {
-            alertString = "您已报名";
+            alertString = "您已报名,无需重复报名";
         }
     } else
         alertString = "您已报名";
