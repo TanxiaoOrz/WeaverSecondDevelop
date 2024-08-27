@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" %>
 <%@ page import="weaver.general.Util"%>
 <%@ page import="weaver.hrm.HrmUserVarify" %>
+<%@ page import="java.util.Date" %>
 
 <jsp:useBean id="rs" class="weaver.conn.RecordSet" scope="page" />
 <%
@@ -16,7 +17,13 @@
             if (rs.next()) {    //是否已报名且签到
                 int counts = rs.getInt("c");
                 if (counts == 1) {
-                    rs.execute("update uf_pxqdmx set qdzt = 2 where pxry = '"+userId+"' and pxkc = '"+ billId +"' and pxrq = concat(CURRENT_DATE,'')");
+                    int hours = new Date().getHours();
+                    int sj;
+                    if (hours>=12)
+                        sj = 1;
+                    else
+                        sj = 0;
+                    rs.execute("update uf_pxqdmx set qdzt = 2 where pxry = '"+userId+"' and pxkc = '"+ billId +"' and pxrq = concat(CURRENT_DATE,'') and sj = " + sj);
 
                     alertString = "签到成功";
                 } else {
