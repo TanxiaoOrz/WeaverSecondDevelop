@@ -15,5 +15,6 @@
     <orderEntry type="library" name="classbean" level="project" />
     <orderEntry type="library" name="lib" level="project" />
     <orderEntry type="library" name="junit-3.8.1" level="project" />
+    <orderEntry type="library" name="sysfiledecrypt-encrypted" level="project" />
   </component>
 </module>
