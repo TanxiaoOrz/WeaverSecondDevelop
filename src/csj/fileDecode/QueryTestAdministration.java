@@ -237,7 +237,7 @@ public class QueryTestAdministration extends BaseCronJob {
                 if (i!=split.length -2)
                     name += ".";
             }
-            return name + "_" + fd_model_id + "." + split[split.length-1];
+            return BASIC_NEW_PATH + typePath + name + "_" + fd_model_id + "." + split[split.length-1];
         }
 
         public String getFileName(int index) {

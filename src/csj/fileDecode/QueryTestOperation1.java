@@ -23,7 +23,7 @@ import java.util.List;
  * @Description: 蓝凌文件解密类
  * @Version: 1.0
  */
-public class QueryTestOperation extends BaseCronJob {
+public class QueryTestOperation1 extends BaseCronJob {
 
     public static final String BASIC_DEC_PATH = "/home/resource";
     public static final String BASIC_NEW_PATH = "/home/new";
@@ -115,9 +115,9 @@ public class QueryTestOperation extends BaseCronJob {
         List<FileBefore> fileBefores = initialFromIds(ids);
 //        Console.log("fileBefores=>\n"+fileBefores);
         fileBefores.forEach(fileBefore -> {
-            Console.log(fileBefore.toString());
+//            Console.log(fileBefore.toString());
             if (translateFile(fileBefore)) {
-                Console.log("success:"+fileBefore.getFdId());
+//                Console.log("success:"+fileBefore.getFdId());
             } else {
                 Console.log("failure:"+fileBefore.getFdId());
             }
@@ -126,7 +126,7 @@ public class QueryTestOperation extends BaseCronJob {
     }
 
 
-    public QueryTestOperation() {
+    public QueryTestOperation1() {
     }
 
     private List<String> getFdModelIds() {
@@ -167,6 +167,7 @@ public class QueryTestOperation extends BaseCronJob {
                     parentDir.mkdirs();
                 }
                 FileUtils.copyFile(decryptFile, newFile);
+                Thread.sleep(20);
                 returns = true;
                 // ===============================具体逻辑项目开发自行处理，以上仅为示例===================================
 
@@ -192,7 +193,7 @@ public class QueryTestOperation extends BaseCronJob {
     }
 
     private List<FileBefore> initialFromIds(List<String> fd_model_ids) {
-        String sqlQuery = "select m.fd_model_id,m.fd_file_name,concat(m.fd_id,'_', f.fd_id) as fd_id,f.fd_file_path from SYS_ATT_MAIN m left join sys_att_file f on m.fd_file_id = f.fd_id where m.fd_model_id in";
+        String sqlQuery = "select m.fd_model_id,m.fd_file_name,concat(m.fd_id,'_', f.fd_id) as fd_id,f.fd_file_path from SYS_ATT_MAIN m left join sys_att_file f on m.fd_file_id = f.fd_id where fd_file_name != 'editonline.doc' and m.fd_model_id in";
         RecordSetDataSource ekpTest = new RecordSetDataSource("ekpTest");
         String execute = sqlQuery + FileBefore.arrayToString(fd_model_ids);
         Console.log(execute);
