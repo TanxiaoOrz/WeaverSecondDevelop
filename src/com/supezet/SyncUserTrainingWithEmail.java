@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @Description: 将人员信息同步到培训系统中
  * @Version: 1.0
  **/
-public class SyncUserTraining extends BaseCronJob implements VersionControl {
+public class SyncUserTrainingWithEmail extends BaseCronJob implements VersionControl {
     /**
      * 支持访问文档
      * @Url https://tbc.21tb.com/open/platformDoc/index.do#/guide
