@@ -28,6 +28,7 @@ public class UpdateHumanInformation {
         recordSet.execute("update hrmResource as h set resourceimageid = rytp from uf_rsda as a where a.ry = h.id and a.id = " + daId);
         recordSet.execute("update hrmResource as h set mobile = sjhm from uf_rsda as a where a.ry = h.id and a.id = " + daId);
         recordSet.execute("update hrmResource as h set locationid = bgdd from uf_rsda as a where a.ry = h.id and a.id = " + daId);
+//        工号/部门/分部/所属上级
     }
 
     /**
@@ -57,10 +58,16 @@ public class UpdateHumanInformation {
                 recordSet.execute("update uf_rsda set nl = '"+years+"' where id =" + daId);
             }
         }
-
-
-
     }
+
+    public void updateJobInformation() {
+        // 获取主账号主岗信息
+        // 确认主岗信息任职是否有更新
+        // 获取主/子账号兼岗信息
+        // 确认兼岗信息是否有更新
+        // 更新主表信息
+    }
+
 
     public UpdateHumanInformation(int daId) {
         this.daId = daId;
