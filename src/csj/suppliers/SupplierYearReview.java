@@ -15,28 +15,25 @@ import java.util.Arrays;
  * @Version: 1.0
  */
 public class SupplierYearReview {
-    /**
-     * -- 创建依赖数据库表
-     * CREATE TABLE "public"."sd_TriggerSupplierReview" (
-     * "id" serial,
-     * "creater" int4,
-     * "dept" int4,
-     * "year" int4,
-     * "counts" int4,
-     * "allcounts" int4,
-     * "company" int4,
-     * "orders" int4
-     * )
-     * ;
-     * ALTER TABLE "public"."sd_TriggerSupplierReview" ADD CONSTRAINT "sd_TriggerSupplierReview_pkey" PRIMARY KEY ("id");
-     * CREATE TABLE "public"."sd_TriggerSupplierReview_dt1" (
-     * "mainid" int4,
-     * "id" serial,
-     * "supplier" int4
-     * )
-     * ;
-     * ALTER TABLE "public"."sd_TriggerSupplierReview_dt1" ADD CONSTRAINT "sd_TriggerSupplierReview_dt1_pkey" PRIMARY KEY ("id");
-     */
+    /*
+        CREATE TABLE sd_TriggerSupplierReview (
+            id serial,
+            creater integer,
+            dept integer,
+            year integer,
+            counts integer,
+            allcounts integer,
+            company integer,
+            orders integer,
+            PRIMARY key (id)
+        );
+        CREATE TABLE sd_TriggerSupplierReview_dt1 (
+            mainid integer,
+            id serial,
+            supplier integer,
+            PRIMARY key (id)
+        );
+    */
     private static String MAIN_TRIGGER_TABLE = "sd_TriggerSupplierReview";
     private static String DETAIL_TRIGGER_TABLE = "sd_TriggerSupplierReview_dt1";
     private static String SUPPLIER_TABLE = "uf_gysxx";
