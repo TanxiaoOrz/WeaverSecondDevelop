@@ -63,9 +63,10 @@ public class SupplierYearReview {
         int agentCount = 0;
         Console.log("Start Create Supplier Year Review Task with companyId = " + company);
         String agentQuerySql = String.format(
-                "select jbr,count(1) as supplierCounts,CAST(count(1)::integer/%d::integer as integer) +1 as requestCounts  from %s where ssgs = %d and jbr is not null GROUP BY jbr",
+                "select jbr,count(1) as supplierCounts,cast((floor(count(1)/%d) +1) as INTEGER) as requestCounts  from %s where ssgs = %d and jbr is not null GROUP BY jbr",
                 maxDetailCount, SUPPLIER_TABLE, company);
         recordSet.execute(agentQuerySql);
+        Console.log("agentQuerySql => " + agentQuerySql);
         try {
             while (recordSet.next()) {
                 AgentSupplier agentSupplier = new AgentSupplier(
