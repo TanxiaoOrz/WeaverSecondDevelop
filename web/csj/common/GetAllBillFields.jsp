@@ -23,5 +23,4 @@
     } catch (Exception e) {
         response.getWriter().println(e.toString());
     }
-W
 %>
