@@ -24,8 +24,9 @@ public class CSJSuppliersCornJob extends BaseCronJob {
         Console.log("CSJ year supplier review asked month => " + month + " asked day => day " + day);
         if (date.getDate() == Integer.parseInt(day) && date.getMonth() +1 == Integer.parseInt(month)) {
             Console.log("Today is asked Day start");
-            SupplierYearReview supplierYearReview = new SupplierYearReview(1, date.getYear());
-            int successCount = supplierYearReview.createRequests();
+            SupplierYearReview csj = new SupplierYearReview(1, date.getYear());
+            SupplierYearReview xc = new SupplierYearReview(3,date.getYear());
+            int successCount = csj.createRequests() + xc.createRequests();
             Console.log("End with SuccessCount => " + successCount);
         } else {
             Console.log("Today isn't asked Day End");
