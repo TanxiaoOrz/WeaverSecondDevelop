@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>员工统计信息</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.js"></script>
+<style>
+    body {
+        background-color: #f0f0f0;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 10px;
+    }
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* 竖向居中对齐 */
+    }
+    h2 {
+        margin: 8px 0 0.5px;
+        background-color: #ffffff;
+        color: #333333;
+        padding: 5px 15px;
+        font-weight: normal;
+        font-size: 1em;
+        line-height: 1.2;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-left: 5px solid #007bff;
+        width: calc(100% - 20px);
+        box-sizing: border-box;
+    }
+    .chart-container {
+        width: calc(100% - 20px);
+        height: auto;
+        margin: 1px 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    @media (max-width: 768px) {
+        .chart-container {
+            min-height: 300px;
+        }
+    }
+    @media (min-width: 768px) {
+        .chart-container {
+            height: 300px;
+        }
+    }
+    @media (max-width: 768px) {
+        .h2 {
+            min-height: 300px;
+        }
+    }
+    @media (min-width: 768px) {
+        .h2 {
+            height: 300px;
+        }
+    }
+    table {
+        border-collapse: collapse;
+        width: calc(100% - 20px);
+		height: 200px;
+        background-color: #ffffff; /* 设置表格背景为白色 */
+    }
+    td {
+        border: none;
+        text-align: center;
+    }
+    .status-bullet {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h2>员工构成</h2>
+    <table>
+        <tr>
+            <!-- 员工构成数据将在这里动态插入 -->
+        </tr>
+        <tr>
+            <!-- 员工构成数据将在这里动态插入 -->
+        </tr>
+        <tr>
+            <!-- 员工构成数据将在这里动态插入 -->
+        </tr>
+    </table>
+</div>
+<div class="container">
+    <h2>年龄分布</h2>
+    <div id="ageDistribution" class="chart-container"></div>
+</div>
+
+<div class="container">
+    <h2>司龄分布</h2>
+    <div id="tenureDistribution" class="chart-container"></div>
+</div>
+
+<div class="container">
+    <h2>学历分布</h2>
+    <div id="educationDistribution" class="chart-container"></div>
+</div>
+
+<div class="container">
+    <h2>性别比例</h2>
+    <div id="genderRatio" class="chart-container"></div>
+</div>
+
+<div class="container">
+    <h2>婚姻状态</h2>
+    <div id="maritalStatus" class="chart-container"></div>
+</div>
+
+<script>
+// 初始化图表
+var ageDistributionChart = echarts.init(document.getElementById('ageDistribution'));
+var tenureDistributionChart = echarts.init(document.getElementById('tenureDistribution'));
+var educationDistributionChart = echarts.init(document.getElementById('educationDistribution'));
+var genderRatioChart = echarts.init(document.getElementById('genderRatio'));
+var maritalStatusChart = echarts.init(document.getElementById('maritalStatus'));
+let cons
+$.ajax({
+    url:"/csj/humanArchive/MobileArchieveChartsData.jsp?subcompanyid=1",
+    type: 'GET',
+    async: false,
+    dataType: "json",
+    success: function (res) {
+        cons = res
+    }
+})
+
+console.log(cons)
+
+
+var employeeCompositionData = cons.employeeCompositionData
+
+var table = document.querySelector('table');
+var row = 0;
+
+employeeCompositionData.forEach(function(item, index) {
+    var td = document.createElement('td');
+    td.innerHTML = `<span class="status-bullet" style="background-color: ${item.color};"></span>${item.count}<br><span style="color: gray;">${item.status}</span>`;
+    var tr = table.rows[row];
+    if (index % 3 === 0) {
+        if (tr.cells.length === 3) {
+            row++;
+            tr = table.insertRow(row);
+        }
+    } else if (tr.cells.length === 3) {
+        tr = table.insertRow(row);
+    }
+    tr.appendChild(td);
+});
+
+
+// 年龄分布图表配置
+var ageOptions = {
+    backgroundColor: 'white',
+    tooltip: {},
+    xAxis: { 
+	type: 'category', 
+	data: ['25岁以下', '25-35岁', '35-45岁', '45-55岁', '55岁以上', '未知'],
+	axisLine: { show: true }, 
+	splitLine: { show: false },
+    axisLabel: {show: true,interval: 0,fontSize: 10},
+	},
+    yAxis: { type: 'value', axisLine: { show: true }, splitLine: { show: false } ,},
+    series: [{
+        data: cons.ageOptionsData,
+        type: 'bar',
+        itemStyle: {
+            color: function(params) {
+                var colorList = ['#C1232B','#B5C334','#FCCE10','#E87C25','#27727B','#FE8463'];
+                return colorList[params.dataIndex];
+            }
+        },
+        label: {
+            show: true,
+            position: 'top', // 数值显示在柱子的最上方
+            formatter: '{c}' // 使用系列数据的数值
+        }
+    }]
+};
+
+
+// 司龄分布图表配置
+var tenureOptions = {
+    backgroundColor: 'white',
+    tooltip: {},
+    xAxis: {
+        type: 'value',
+        position: 'top', // 将 x 轴放置在顶部
+        axisLine: { show: true },
+        splitLine: { show: false },
+    },
+    yAxis: {
+        type: 'category',
+        data: cons.companyAgeOptionsData,
+        axisLine: { show: true },
+        splitLine: { show: false }
+    },
+	grid: {
+    left: '20%',
+    right: '10%',
+    bottom: '15%'
+},
+    series: [{
+        data: [91, 88, 35, 11, 18, 52],
+        type: 'bar',
+        itemStyle: {
+            color: function(params) {
+                var colorList = ['#C1232B','#B5C334','#FCCE10','#E87C25','#27727B','#FE8463'];
+                return colorList[params.dataIndex];
+            }
+        },
+        label: {
+            show: true,
+            position: 'right',
+            formatter: '{c}'
+        }
+    }]
+};
+
+// 学历分布图表配置
+var educationOptions = {
+    backgroundColor: 'white',
+    tooltip: {},
+    xAxis: {
+        type: 'category',
+        data: cons.educationOptionsSxAxisData,
+		axisLabel: {
+            //x轴文字的配置
+            show: true,
+            interval: 0,//使x轴文字显示全
+            formatter: function(params) {
+              var newParamsName = "";
+              var paramsNameNumber = params.length;
+              var provideNumber = 3; //一行显示几个字
+              var rowNumber = Math.ceil(paramsNameNumber / provideNumber);
+              if (paramsNameNumber > provideNumber) {
+                for (var p = 0; p < rowNumber; p++) {
+                  var tempStr = "";
+                  var start = p * provideNumber;
+                  var end = start + provideNumber;
+                  if (p == rowNumber - 1) {
+                    tempStr = params.substring(start, paramsNameNumber);
+                  } else {
+                    tempStr = params.substring(start, end) + "\n";
+                  }
+                  newParamsName += tempStr;
+                }
+              } else {
+                newParamsName = params;
+              }
+              return newParamsName;
+            }
+          },
+    },
+    yAxis: {
+        type: 'value'
+    },
+    series: [{
+        data: cons.educationOptionsSeriesData,
+        type: 'bar',
+        itemStyle: {
+            color: function(params) {
+                var colorList = ['#C1232B','#B5C334','#FCCE10','#E87C25','#27727B','#FE8463'];
+                return colorList[params.dataIndex];
+            }
+        },
+        label: {
+            show: true,
+            position: 'top', // 将数值显示在柱子的顶部
+            formatter: '{c}' // 使用系列数据的数值
+        }
+    }]
+};
+
+// 性别比例图表配置
+var genderOptions = {
+    backgroundColor: 'white',
+    tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    legend: {
+        orient: 'vertical',
+        left: 'left',
+        data: ['女性', '男性', '未知']
+    },
+    series: [
+        {
+            name: '性别比例',
+            type: 'pie',
+            radius: '55%', // 设置半径为 55%
+            center: ['50%', '60%'], // 设置图表的中心位置
+            data: cons.genderOptionsData,
+            label: {
+                show: true,
+                position: 'outside', // 标签显示在扇区外部
+                formatter: '{b}: {d}%'
+            }
+        }
+    ]
+};
+
+// 婚姻状态图表配置
+var maritalStatusOptions = {
+    backgroundColor: 'white',
+    tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b}: {c} ({d}%)'
+    },
+    legend: {
+        orient: 'vertical',
+        left: 'left',
+        data: ["已婚已育", "已婚未育", "未婚", "其他","已婚", "未知"]
+    },
+    series: [
+        {
+            name: '婚姻状态',
+            type: 'pie',
+            radius: ['40%', '70%'], // 环形图的内外半径
+            avoidLabelOverlap: false,
+            label: {
+                show: true,
+                position: 'inside', // 标签显示在扇区内部
+                formatter: '{b}: {c}' // 显示名称和数值
+            },
+            data: cons.maritalStatusData
+        }
+    ]
+};
+
+// 使用配置项和数据显示图表
+ageDistributionChart.setOption(ageOptions);
+tenureDistributionChart.setOption(tenureOptions);
+educationDistributionChart.setOption(educationOptions);
+genderRatioChart.setOption(genderOptions);
+maritalStatusChart.setOption(maritalStatusOptions);
+</script>
+
+</body>
+</html>
