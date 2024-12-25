@@ -8,7 +8,7 @@ import weaver.general.TimeUtil;
 import weaver.general.Util;
 import weaver.hrm.resource.ResourceComInfo;
 
-public class GetWorkPlanV4
+public class GetWorkPlanV5
 {
     public String getWP(String type, String date, String datetime, String subcomid, String deptid, String ispc) throws Exception {
         RecordSet rs = new RecordSet();
@@ -72,7 +72,7 @@ public class GetWorkPlanV4
             ryxm = Util.null2String(rs.getString("ryxm"));
             pcdz = Util.null2String(rs.getString("pcljdz"));
             yddz = Util.null2String(rs.getString("ydljdz"));
-            resourceid = Util.null2String(rs.getString("resourceid"));
+            resourceid = Util.null2String(rs.getString("chry"));
             idlist = Util.TokenizerString(resourceid, ",");
             othermembers = Util.null2String(rs.getString("othermembers"));
 
