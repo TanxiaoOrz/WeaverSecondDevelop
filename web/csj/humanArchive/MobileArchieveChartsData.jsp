@@ -9,8 +9,8 @@
 <%
     int userId = HrmUserVarify.getUser(request, response).getUID();
     String sqlCondition ;
-    rs.execute("select h.id, subcompanyid1 , ckgs from hrmresource as h  LEFT JOIN uf_ArchCharts4Mob as n on h.subcompanyid1 = n.ssgs where (ckqb is null or ckqb = 0) and h.id =" + userId);
-    Console.log("select h.id, subcompanyid1 , ckgs from hrmresource as h  LEFT JOIN uf_ArchCharts4Mob as n on h.subcompanyid1 = n.ssgs where (ckqb is null or ckqb = 0) and h.id =" + userId);
+    rs.execute("select h.id, subcompanyid1 , ckgs from hrmresource as h  LEFT JOIN uf_ArchCharts4Mob as n on h.subcompanyid1 = n.ssgs where (ckqb is null or ckqb = 0 or ssgs is null) and h.id =" + userId);
+    Console.log("select h.id, subcompanyid1 , ckgs from hrmresource as h  LEFT JOIN uf_ArchCharts4Mob as n on h.subcompanyid1 = n.ssgs where (ckqb is null or ckqb = 0 or ssgs is null) and h.id =" + userId);
     if (rs.next()) {
         String cksg = Util.null2String(rs.getString("ckgs"));
         String subcompanyid1 = Util.null2String(rs.getString("subcompanyid1"));
