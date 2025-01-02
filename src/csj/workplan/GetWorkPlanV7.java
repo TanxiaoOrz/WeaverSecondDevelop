@@ -8,7 +8,7 @@ import weaver.general.TimeUtil;
 import weaver.general.Util;
 import weaver.hrm.resource.ResourceComInfo;
 
-public class GetWorkPlanV5
+public class GetWorkPlanV7
 {
     public String getWP(String type, String date, String datetime, String subcomid, String deptid, String ispc) throws Exception {
         RecordSet rs = new RecordSet();
@@ -56,6 +56,9 @@ public class GetWorkPlanV5
         if ((!deptid.equals("")) && (deptid != null)) {
             sql = sql + " and concat(',',bm,',')  like '%," + deptid + ",%' ";
         }
+
+        sql += " ORDER BY rcksrq , rckssj ";
+
         rs.execute(sql);
 
         while (rs.next())
@@ -72,7 +75,7 @@ public class GetWorkPlanV5
             ryxm = Util.null2String(rs.getString("ryxm"));
             pcdz = Util.null2String(rs.getString("pcljdz"));
             yddz = Util.null2String(rs.getString("ydljdz"));
-            resourceid = Util.null2String(rs.getString("chry"));
+            resourceid = Util.null2String(rs.getString("resourceid"));
             idlist = Util.TokenizerString(resourceid, ",");
             othermembers = Util.null2String(rs.getString("othermembers"));
 
