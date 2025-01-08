@@ -152,6 +152,70 @@
             array.add(Util.getIntValue(Util.null2String(rs.getString("data"))));
         con.put("companyAgeOptionsData", array);
     }
+    {
+        String [][] rankOptionMatrix = {
+                {"like '%,4,%'","初级"},
+                {"like '%,5,%'","中级"},
+                {"like '%,6,%'","高级"},
+                {"not like '%,4,%' and not like '%,5,%' and not like '%,6,%'","其它"},
+        };
+        JSONArray rankOptionMatrixData = new JSONArray();
+        for (int i = 0; i < rankOptionMatrix.length; i++) {
+            String rankOptionDataSql = "select count(1) as count from uf_rsda where "+sqlCondition+"and ','||modelableid||',' " + rankOptionMatrix[i][0];
+            System.out.println("rankOptionDataSql["+i+"] = " + rankOptionDataSql);
+            rs.execute(rankOptionDataSql);
+            if (rs.next()) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("value", Util.getIntValue(Util.null2String(rs.getString("count"))));
+                jsonObject.put("name", rankOptionMatrix[i][1]);
+                rankOptionMatrixData.add(jsonObject);
+            }
+        }
+        con.put("rankOptionMatrixData",rankOptionMatrixData);
+
+    }
+    {
+        String [][] rankOptionMatrix = {
+                {"like '%,4,%'","初级"},
+                {"like '%,5,%'","中级"},
+                {"like '%,6,%'","高级"},
+                {"not like '%,4,%' and not like '%,5,%' and not like '%,6,%'","其它"},
+        };
+        JSONArray rankOptionMatrixData = new JSONArray();
+        for (int i = 0; i < rankOptionMatrix.length; i++) {
+            String rankOptionDataSql = "select count(1) as count from uf_rsda where "+sqlCondition+"and ','||modelableid||',' " + rankOptionMatrix[i][0];
+            System.out.println("rankOptionDataSql["+i+"] = " + rankOptionDataSql);
+            rs.execute(rankOptionDataSql);
+            if (rs.next()) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("value", Util.getIntValue(Util.null2String(rs.getString("count"))));
+                jsonObject.put("name", rankOptionMatrix[i][1]);
+                rankOptionMatrixData.add(jsonObject);
+            }
+        }
+        con.put("rankOptionMatrixData",rankOptionMatrixData);
+    }
+    {
+        String [][] gradeOptionMatrix = {
+                {"like '%,7,%'","领导班子"},
+                {"like '%,8,%'","部门正职"},
+                {"like '%,9,%'","部门副职"},
+                {"not like '%,4,%' and not like '%,5,%' and not like '%,6,%'","其它"},
+        };
+        JSONArray rankOptionMatrixData = new JSONArray();
+        for (int i = 0; i < gradeOptionMatrix.length; i++) {
+            String rankOptionDataSql = "select count(1) as count from uf_rsda where "+sqlCondition+"and ','||modelableid||',' " + gradeOptionMatrix[i][0];
+            System.out.println("gradeOptionMatrix["+i+"] = " + rankOptionDataSql);
+            rs.execute(rankOptionDataSql);
+            if (rs.next()) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("value", Util.getIntValue(Util.null2String(rs.getString("count"))));
+                jsonObject.put("name", gradeOptionMatrix[i][1]);
+                rankOptionMatrixData.add(jsonObject);
+            }
+        }
+        con.put("gradeOptionMatrix",rankOptionMatrixData);
+    }
     response.getWriter().println(con.toString());
 %>
 
