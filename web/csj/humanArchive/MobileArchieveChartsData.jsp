@@ -10,7 +10,7 @@
     int userId = HrmUserVarify.getUser(request, response).getUID();
     String sqlCondition ;
     rs.execute("select h.id, subcompanyid1 , ckgs from hrmresource as h  LEFT JOIN uf_ArchCharts4Mob as n on h.subcompanyid1 = n.ssgs where (ckqb is null or ckqb = 0 or ssgs is null) and h.id =" + userId);
-    Console.log("select h.id, subcompanyid1 , ckgs from hrmresource as h  LEFT JOIN uf_ArchCharts4Mob as n on h.subcompanyid1 = n.ssgs where (ckqb is null or ckqb = 0 or ssgs is null) and h.id =" + userId);
+    // Console.log("select h.id, subcompanyid1 , ckgs from hrmresource as h  LEFT JOIN uf_ArchCharts4Mob as n on h.subcompanyid1 = n.ssgs where (ckqb is null or ckqb = 0 or ssgs is null) and h.id =" + userId);
     if (rs.next()) {
         String cksg = Util.null2String(rs.getString("ckgs"));
         String subcompanyid1 = Util.null2String(rs.getString("subcompanyid1"));
@@ -37,7 +37,7 @@
         };
         JSONArray array = new JSONArray();
         String queryEmployeeCompositionDataSql = "select rzygzt as status, count(1) as count from uf_rsda where " + sqlCondition + "   GROUP BY rzygzt ";
-        Console.log("queryEmployeeCompositionDataSql = " + queryEmployeeCompositionDataSql);
+        // Console.log("queryEmployeeCompositionDataSql = " + queryEmployeeCompositionDataSql);
         rs.execute(queryEmployeeCompositionDataSql);
         while (rs.next()) {
             JSONObject object = new JSONObject();
@@ -64,16 +64,18 @@
         JSONArray array = new JSONArray();
         for (int i = 0; i < ageOptionsMatrix.length; i++) {
             String queryAgeGroupCountDataSql = "select count(1) as data from uf_rsda where " + sqlCondition + " and age(TO_DATE(csrq),CURRENT_DATE) > " + ageOptionsMatrix[i][0] + " and age(TO_DATE(csrq),CURRENT_DATE) < " + ageOptionsMatrix[i][1];
-            Console.log("queryAgeGroupCountDataSql[" + i + "] = " + queryAgeGroupCountDataSql);
+            // Console.log("queryAgeGroupCountDataSql[" + i + "] = " + queryAgeGroupCountDataSql);
             rs.execute(queryAgeGroupCountDataSql);
             if (rs.next())
                 array.add(Util.getIntValue(Util.null2String(rs.getString("data"))));
         }
-        String queryAgeGroupCountDataSql = "select count(1) as data from uf_rsda where " + sqlCondition + " csrq is null";
-        Console.log("queryAgeGroupCountDataSql[null] = " + queryAgeGroupCountDataSql);
+        String queryAgeGroupCountDataSql = "select count(1) as data from uf_rsda where " + sqlCondition + "and csrq is null";
+        // Console.log("queryAgeGroupCountDataSql[null] = " + queryAgeGroupCountDataSql);
         rs.execute(queryAgeGroupCountDataSql);
         if (rs.next())
             array.add(Util.getIntValue(Util.null2String(rs.getString("data"))));
+        else
+            array.add(0);
         con.put("ageOptionsData", array);
     }
     {
@@ -81,7 +83,7 @@
         JSONArray educationOptionsSxAxisData = new JSONArray();
 
         String queryEducationOptionsSql = "select ifnull(xl,'未知') as xl, count(1) as count from uf_rsda where " + sqlCondition + " GROUP BY xl";
-        Console.log("queryEducationOptionsSql = " + queryEducationOptionsSql);
+        // Console.log("queryEducationOptionsSql = " + queryEducationOptionsSql);
         rs.execute(queryEducationOptionsSql);
         while (rs.next()) {
             educationOptionsSxAxisData.add(Util.null2String(rs.getString("xl")));
@@ -99,7 +101,7 @@
                     "未知"
             };
             String queryGenderOptionSql = "select ifnull(xb,2) xb, count(1) count from uf_rsda where " + sqlCondition + " GROUP BY xb";
-            Console.log("queryGenderOptionSql = " + queryGenderOptionSql);
+            // Console.log("queryGenderOptionSql = " + queryGenderOptionSql);
             rs.execute(queryGenderOptionSql);
             while (rs.next()) {
                 JSONObject jsonObject = new JSONObject();
@@ -115,7 +117,7 @@
                     "已婚已育", "已婚未育", "未婚", "其他", "已婚", "未知"
             };
             String queryMaritalStatusOptionSql = "select case when zzmm = 5 then 3 else ifnull(zzmm , 5) end  as hyzk, count(1) count from uf_rsda where " + sqlCondition + " GROUP BY zzmm";
-            Console.log("queryMaritalStatusOptionSql = " + queryMaritalStatusOptionSql);
+            // Console.log("queryMaritalStatusOptionSql = " + queryMaritalStatusOptionSql);
             rs.execute(queryMaritalStatusOptionSql);
             while (rs.next()) {
                 JSONObject jsonObject = new JSONObject();
@@ -126,8 +128,8 @@
             con.put("maritalStatusData", maritalStatusOptionsData);
         }
     } catch (Exception e) {
-        Console.log(e.getMessage());
-        Console.log(e.getClass().toString());
+        // Console.log(e.getMessage());
+        // Console.log(e.getClass().toString());
     }
     {
         int[][] companyAgeOptionsMatrix = {
@@ -140,13 +142,13 @@
         JSONArray array = new JSONArray();
         for (int i = 0; i < companyAgeOptionsMatrix.length; i++) {
             String queryCompanyAgeGroupCountDataSql = "select count(1) as data from uf_rsda where " + sqlCondition + " and age(TO_DATE(dbdwrq),CURRENT_DATE) > " + companyAgeOptionsMatrix[i][0] + " and age(TO_DATE(dbdwrq),CURRENT_DATE) < " + companyAgeOptionsMatrix[i][1];
-            Console.log("queryCompaneAgeGroupCountDataSql[" + i + "] = " + queryCompanyAgeGroupCountDataSql);
+            // Console.log("queryCompaneAgeGroupCountDataSql[" + i + "] = " + queryCompanyAgeGroupCountDataSql);
             rs.execute(queryCompanyAgeGroupCountDataSql);
             if (rs.next())
                 array.add(Util.getIntValue(Util.null2String(rs.getString("data"))));
         }
         String queryAgeGroupCountDataSql = "select count(1) as data from uf_rsda where " + sqlCondition + " csrq is null";
-        Console.log("queryAgeGroupCountDataSql[null] = " + queryAgeGroupCountDataSql);
+        // Console.log("queryAgeGroupCountDataSql[null] = " + queryAgeGroupCountDataSql);
         rs.execute(queryAgeGroupCountDataSql);
         if (rs.next())
             array.add(Util.getIntValue(Util.null2String(rs.getString("data"))));
@@ -162,7 +164,7 @@
         JSONArray rankOptionMatrixData = new JSONArray();
         for (int i = 0; i < rankOptionMatrix.length; i++) {
             String rankOptionDataSql = "select count(1) as count from uf_rsda where "+sqlCondition+"and ','||modelableid||',' " + rankOptionMatrix[i][0];
-            System.out.println("rankOptionDataSql["+i+"] = " + rankOptionDataSql);
+            // Console.log("rankOptionDataSql["+i+"] = " + rankOptionDataSql);
             rs.execute(rankOptionDataSql);
             if (rs.next()) {
                 JSONObject jsonObject = new JSONObject();
@@ -176,15 +178,15 @@
     }
     {
         String [][] rankOptionMatrix = {
-                {"like '%,4,%'","初级"},
-                {"like '%,5,%'","中级"},
-                {"like '%,6,%'","高级"},
-                {"not like '%,4,%' and not like '%,5,%' and not like '%,6,%'","其它"},
+                {"like '%,4,%'","初级职称"},
+                {"like '%,5,%'","中级职称"},
+                {"like '%,6,%'","高级职称"},
+                {" not like '%,4,%'  and ','||modelableid||',' not like '%,5,%'  and ','||modelableid||',' not like '%,6,%' ","其它"},
         };
         JSONArray rankOptionMatrixData = new JSONArray();
         for (int i = 0; i < rankOptionMatrix.length; i++) {
-            String rankOptionDataSql = "select count(1) as count from uf_rsda where "+sqlCondition+"and ','||modelableid||',' " + rankOptionMatrix[i][0];
-            System.out.println("rankOptionDataSql["+i+"] = " + rankOptionDataSql);
+            String rankOptionDataSql = "select count(1) as count from uf_rsda where "+sqlCondition+" and ','||modelableid||',' " + rankOptionMatrix[i][0];
+            // Console.log("rankOptionDataSql["+i+"] = " + rankOptionDataSql);
             rs.execute(rankOptionDataSql);
             if (rs.next()) {
                 JSONObject jsonObject = new JSONObject();
@@ -200,21 +202,21 @@
                 {"like '%,7,%'","领导班子"},
                 {"like '%,8,%'","部门正职"},
                 {"like '%,9,%'","部门副职"},
-                {"not like '%,4,%' and not like '%,5,%' and not like '%,6,%'","其它"},
+                {"not like '%,7,%'  and ','||modelableid||',' not like '%,8,%'  and ','||modelableid||',' not like '%,9,%' ","其它人员"},
         };
-        JSONArray rankOptionMatrixData = new JSONArray();
+        JSONArray gradeOptionMatrixData = new JSONArray();
         for (int i = 0; i < gradeOptionMatrix.length; i++) {
-            String rankOptionDataSql = "select count(1) as count from uf_rsda where "+sqlCondition+"and ','||modelableid||',' " + gradeOptionMatrix[i][0];
-            System.out.println("gradeOptionMatrix["+i+"] = " + rankOptionDataSql);
-            rs.execute(rankOptionDataSql);
+            String gradeOptionMatrixDataOptionDataSql = "select count(1) as count from uf_rsda where "+sqlCondition+" and ','||modelableid||',' " + gradeOptionMatrix[i][0];
+            // Console.log("gradeOptionMatrixDataOptionDataSql["+i+"] = " + gradeOptionMatrixDataOptionDataSql);
+            rs.execute(gradeOptionMatrixDataOptionDataSql);
             if (rs.next()) {
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("value", Util.getIntValue(Util.null2String(rs.getString("count"))));
                 jsonObject.put("name", gradeOptionMatrix[i][1]);
-                rankOptionMatrixData.add(jsonObject);
+                gradeOptionMatrixData.add(jsonObject);
             }
         }
-        con.put("gradeOptionMatrix",rankOptionMatrixData);
+        con.put("gradeOptionMatrixData",gradeOptionMatrixData);
     }
     response.getWriter().println(con.toString());
 %>
