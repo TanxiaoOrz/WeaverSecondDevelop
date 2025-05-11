@@ -31,6 +31,5 @@ public class CSJSuppliersCornJob extends BaseCronJob {
         } else {
             Console.log("Today isn't asked Day End");
         }
-
     }
 }

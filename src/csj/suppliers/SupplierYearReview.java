@@ -60,7 +60,7 @@ public class SupplierYearReview {
         int agentCount = 0;
         Console.log("Start Create Supplier Year Review Task with companyId = " + company);
         String agentQuerySql = String.format(
-                "select jbr,count(1) as supplierCounts,cast((floor(count(1)/%d) +1) as INTEGER) as requestCounts  from %s where ssgs = %d and jbr is not null GROUP BY jbr",
+                "select ifnull(psr,jbr) as jbr,count(1) as supplierCounts,cast((floor(count(1)/%d) +1) as INTEGER) as requestCounts  from %s where ssgs = %d and jbr is not null GROUP BY ifnull(psr,jbr)",
                 maxDetailCount, SUPPLIER_TABLE, company);
         recordSet.execute(agentQuerySql);
         Console.log("agentQuerySql => " + agentQuerySql);
@@ -127,7 +127,7 @@ public class SupplierYearReview {
             int successCount = 0;
 
             int dept = -1;
-            String deptQuerySql = "select departmentid from hrmresource where id = 108";
+            String deptQuerySql = "select departmentid from hrmresource where id = " + agentId;
             recordSet.execute(deptQuerySql);
             if (recordSet.next())
                 dept = recordSet.getInt("departmentid");
