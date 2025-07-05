@@ -83,37 +83,43 @@ public class SendRequests4E10 {
 
         for (DataObj dobj : datas) {
             ArrayList<RequestStatusObj> tododatas = dobj.getTododatas();
-            if (tododatas.size() > 0) {//处理推送的待办数据
+            if (tododatas.size() > 0) { //处理推送的待办数据
                 Console.log("TODO");
-                for (RequestStatusObj rso : tododatas) {//遍历当前发送的待办数据
-                    JSONObject param = getParam(rso,TODO);
-                    Console.log((param.toString()));
-                    if (!pushRequest(param)) {
-                        Console.log("error-push:");
+                for (RequestStatusObj rso : tododatas) {    //遍历当前发送的待办数据
+                    if (checkWhite(rso)) {  // 检查当前请求是否符合白名单要求
+                        JSONObject param = getParam(rso,TODO);
+                        Console.log((param.toString()));
+                        if (!pushRequest(param)) {
+                            Console.log("error-push:");
+                        }
                     }
                 }
 
             }
             ArrayList<RequestStatusObj> donedatas = dobj.getDonedatas();
-            if (donedatas.size() > 0) {//处理推送的已办数据
+            if (donedatas.size() > 0) { //处理推送的已办数据
                 Console.log("Done");
-                for (RequestStatusObj rso : donedatas) {//遍历当前发送的已办数据
-                    JSONObject param = getParam(rso,DONE);
-                    Console.log((param.toString()));
-                    if (!pushRequest(param)) {
-                        Console.log("error-push:");
+                for (RequestStatusObj rso : donedatas) {    //遍历当前发送的已办数据
+                    if (checkWhite(rso)) {  // 检查当前请求是否符合白名单要求
+                        JSONObject param = getParam(rso, DONE);
+                        Console.log((param.toString()));
+                        if (!pushRequest(param)) {
+                            Console.log("error-push:");
+                        }
                     }
                 }
 
             }
             ArrayList<RequestStatusObj> deldatas = dobj.getDeldatas();
-            if (deldatas.size() > 0) {//处理推送的删除数据
+            if (deldatas.size() > 0) {  //处理推送的删除数据
                 Console.log("Delete");
-                for (RequestStatusObj rso : deldatas) {//遍历当前发送的删除数据
-                    JSONObject param = getParam(rso, DELETE);
-                    Console.log((param.toString()));
-                    if (!pushRequest(param)) {
-                        Console.log("error-push:");
+                for (RequestStatusObj rso : deldatas) { //遍历当前发送的删除数据
+                    if (checkWhite(rso)) {  // 检查当前请求是否符合白名单要求
+                        JSONObject param = getParam(rso, DELETE);
+                        Console.log((param.toString()));
+                        if (!pushRequest(param)) {
+                            Console.log("error-push:");
+                        }
                     }
                 }
             }
@@ -121,15 +127,32 @@ public class SendRequests4E10 {
 
     }
 
+    /**
+     * 检查请求状态对象是否符合白名单要求
+     *
+     * @param rso 请求状态对象，包含请求的相关信息，如用户ID、流程ID等
+     * @return 如果符合白名单要求返回true，否则返回false
+     */
     private boolean checkWhite(RequestStatusObj rso) {
-        if (userwhitelist.size()>0) {
+        // 检查人员白名单是否存在且不为空
+        if (userwhitelist!=null&&userwhitelist.size()>0) {
+            // 若当前请求用户的UID不在人员白名单中
             if (!userwhitelist.contains(String.valueOf(rso.getUser().getUID()))) {
+                // 记录人员黑名单信息
+                Console.log("人员黑名单" + rso.getUser().getUID());
                 return false;
             }
         }
-        if (workflowwhitelist.size()>0) {
-            return workflowwhitelist.contains(String.valueOf(rso.getWorkflowid()));
+        // 检查流程白名单是否存在且不为空
+        if (workflowwhitelist!=null&&workflowwhitelist.size()>0) {
+            // 若当前请求的流程ID不在流程白名单中
+            if (!workflowwhitelist.contains(String.valueOf(rso.getWorkflowid()))) {
+                // 记录流程黑名单信息
+                Console.log("流程黑名单" + rso.getWorkflowid());
+                return false;
+            }
         }
+        // 若通过所有白名单检查，返回true
         return true;
     }
 
