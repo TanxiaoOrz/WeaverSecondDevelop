@@ -5,13 +5,11 @@ import ISS.util.AccessTokenUtil;
 import ISS.util.ConfigUtil;
 import ISS.util.Console;
 import okhttp3.*;
+import org.json.JSONObject;
 import weaver.conn.RecordSet;
-import weaver.general.StringUtil;
 import weaver.general.Util;
 import weaver.workflow.request.todo.DataObj;
 import weaver.workflow.request.todo.RequestStatusObj;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -24,7 +22,7 @@ import java.util.Date;
  * @Description: 统一待办推送E10
  * @Version: 1.1
  */
-public class SendRequests4E10 {
+public class SendRequests4E10TestWhiteList {
 
     /**
      * 后台设置id
@@ -192,9 +190,9 @@ public class SendRequests4E10 {
                     .addHeader("Content-Type", "application/json")
                     .build();
             Response response = client.newCall(request).execute();
-            org.json.JSONObject rtnJson = new org.json.JSONObject(response.body().string());
+            JSONObject rtnJson = new JSONObject(response.body().string());
             if (rtnJson.getJSONObject("message").getString("errcode").equals("200")) {
-                org.json.JSONObject data = rtnJson.getJSONObject("data");
+                JSONObject data = rtnJson.getJSONObject("data");
                 if (data.getString("operResult").equals("1")) {
                     System.out.println("rtnJson = " + data.getString("message"));
                     Console.log(rtnJson.toString());
