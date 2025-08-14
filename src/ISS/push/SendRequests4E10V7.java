@@ -7,6 +7,7 @@ import ISS.util.Console;
 import okhttp3.*;
 import weaver.conn.RecordSet;
 import weaver.general.Util;
+import weaver.hrm.User;
 import weaver.workflow.request.todo.DataObj;
 import weaver.workflow.request.todo.RequestStatusObj;
 import org.json.JSONObject;
@@ -18,11 +19,11 @@ import java.util.Date;
  * @Author: 张骏山
  * @Date: 2025/5/10 17:51
  * @PackageName: ISS.push
- * @ClassName: SendRequests4E10V3
+ * @ClassName: SendRequests4E10V7
  * @Description: 统一待办推送E10
  * @Version: 1.1
  */
-public class SendRequests4E10V3 {
+public class SendRequests4E10V7 {
 
     /**
      * 后台设置id
@@ -84,6 +85,10 @@ public class SendRequests4E10V3 {
             if (tododatas.size() > 0) {//处理推送的待办数据
                 Console.log("TODO");
                 for (RequestStatusObj rso : tododatas) {//遍历当前发送的待办数据
+                    if (checkWhite(rso)) {
+                        Console.log("人员或流程不在白名单");
+                        continue;
+                    }
                     JSONObject param = getParam(rso,TODO);
                     Console.log((param.toString()));
                     if (!pushRequest(param)) {
@@ -96,6 +101,10 @@ public class SendRequests4E10V3 {
             if (donedatas.size() > 0) {//处理推送的已办数据
                 Console.log("Done");
                 for (RequestStatusObj rso : donedatas) {//遍历当前发送的已办数据
+                    if (checkWhite(rso)) {
+                        Console.log("人员或流程不在白名单");
+                        continue;
+                    }
                     JSONObject param = getParam(rso,DONE);
                     Console.log((param.toString()));
                     if (!pushRequest(param)) {
@@ -108,6 +117,10 @@ public class SendRequests4E10V3 {
             if (deldatas.size() > 0) {//处理推送的删除数据
                 Console.log("Delete");
                 for (RequestStatusObj rso : deldatas) {//遍历当前发送的删除数据
+                    if (checkWhite(rso)) {
+                        Console.log("人员或流程不在白名单");
+                        continue;
+                    }
                     JSONObject param = getParam(rso, DELETE);
                     Console.log((param.toString()));
                     if (!pushRequest(param)) {
@@ -120,15 +133,23 @@ public class SendRequests4E10V3 {
     }
 
     private boolean checkWhite(RequestStatusObj rso) {
-        if (userwhitelist.size()>0) {
+        if (userwhitelist != null &&userwhitelist.size()>0) {
             if (!userwhitelist.contains(String.valueOf(rso.getUser().getUID()))) {
-                return false;
+                return true;
             }
         }
-        if (workflowwhitelist.size()>0) {
-            return workflowwhitelist.contains(String.valueOf(rso.getWorkflowid()));
+        if (workflowwhitelist != null &&workflowwhitelist.size()>0) {
+            return !workflowwhitelist.contains(String.valueOf(rso.getWorkflowid()));
         }
-        return true;
+        return false;
+    }
+
+    private String getUserLogin(User user) {
+        String mobile = user.getMobile();
+        if (Util.null2String(mobile).equals("")) {
+            return user.getLoginid();
+        } else
+            return mobile;
     }
 
 
@@ -139,14 +160,14 @@ public class SendRequests4E10V3 {
             param.put("flowid", rso.getRequestid());
             param.put("requestname", rso.getRequestnamenew());
             param.put("workflowcode", rso.getWorkflowid());
-            param.put("workflowname", rso.getWorkflowname());
-            param.put("receivernodename", rso.getNodename());
-            param.put("nodename", rso.getNodename());
+            param.put("workflowname", rso.getWorkflowname().replaceAll("\\u00A0", " ").replaceAll("<[^>]`>", ""));
+            param.put("receivernodename", rso.getNodename().replaceAll("\\u00A0", " ").replaceAll("<[^>]`>", ""));
+            param.put("nodename", rso.getNodename().replaceAll("\\u00A0", " ").replaceAll("<[^>]`>", ""));
             param.put("pcurl", "/spa/workflow/static4form/index.html?_rdm=1746871206719#/main/workflow/req?requestid=" + rso.getRequestid());
             param.put("appurl", "/spa/workflow/static4mobileform/index.html?_random=1746871275492#/req?requestid=" + rso.getRequestid());
-            param.put("creator", rso.getCreator().getLoginid());
+            param.put("creator", getUserLogin(rso.getCreator()));
             param.put("createdatetime", rso.getCreatedate() + " " + rso.getCreatetime());
-            param.put("receiver", rso.getUser().getLoginid());
+            param.put("receiver", getUserLogin(rso.getUser()));
             param.put("receivedatetime", rso.getReceivedate() + " " + rso.getReceivetime());
             switch (rso.getIsremark()) {
                 /*
@@ -183,7 +204,10 @@ public class SendRequests4E10V3 {
                     if (recordSet.next()) {
                         String currentnodetype = Util.null2String(recordSet.getString("currentnodetype"));
                         if (!"".equals(currentnodetype)) {
-                            param.put("requestStatus", currentnodetype);
+                            if (currentnodetype.equals("0"))
+                                param.put("requestStatus", "-1");
+                            else
+                                param.put("requestStatus", currentnodetype);
                         }
                     }
                     break;
