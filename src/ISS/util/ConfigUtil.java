@@ -9,7 +9,7 @@ package ISS.util;
  * @Version: 1.0
  */
 public class ConfigUtil {
-    private static String E10_URL = "https://oasandbox.oneiss.cn";
+    private static String E10_URL = "http://172.19.69.107:10600/";
     private static String E10_APP_KEY = "3b184b8775f89a270eb2283ce42bfa73";
     private static String E10_APP_SECURITY = "a74bc2fccef07db9b9ba9c61a78afb7c";
     private static String E10_CORP_ID = "483160fc5581589b398c3438fcbb7f68";
