@@ -33,7 +33,7 @@ public class E10Config {
      * 构造函数,使用默认值
      */
     public E10Config() {
-
+        readConfig();
     }
 
     /**
@@ -43,7 +43,7 @@ public class E10Config {
      * @return 属性值
      */
     private String  getPropsWithDefault(String propName, String defaults) {
-        String value = rs.getPropValue("E10Config.properties", propName);
+        String value = rs.getPropValue("E10Config", propName);
         if (Util.null2String(value).equals("")) {
             value = defaults;
         }
@@ -93,6 +93,8 @@ public class E10Config {
     public static String getAuthType() {
         return getInstance().authType;
     }
+
+    
 
 
 }
