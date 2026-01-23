@@ -21,7 +21,7 @@ public class E10Config {
         }
         return instance;
     }
-    private String E10_URL = "http://10.244.2.46:10600/";
+    private String E10_URL = "http://223.167.85.43:8128/";
     private String E10_APP_KEY = "266849111ef138e557341f5082b627bc";
     private String E10_APP_SECURITY = "df84cee6c465219ddb0f4110b8dd1dfa";
     private String E10_CORP_ID = "cb95b1479996ded0986076afb814c4bd";

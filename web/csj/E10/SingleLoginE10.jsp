@@ -2,7 +2,7 @@
 <%@ page import="weaver.general.Util"%>
 <%@ page import="weaver.hrm.HrmUserVarify" %>
 <%@ page import="csj.E10.E10Config" %>
-<%@ page import="csj.E10.GetE10Token" %>
+<%@ page import="csj.E10.GetE10TokenV2" %>
 <jsp:useBean id="rs" class="weaver.conn.RecordSet" scope="page" />
 <%
     int userId = HrmUserVarify.getUser(request, response).getUID();
@@ -18,11 +18,11 @@
     if (reload) {
         E10Config.init();
     }
-    String sql = "select loginid from hrmresource where id = "+userId;
+    String sql = "select workcode from hrmresource where id = "+userId;
     rs.execute(sql);
     if (rs.next()) {
-        String loginid = Util.null2String(rs.getString("loginid"));
-        String token = new GetE10Token().getToken(loginid);
+        String loginid = Util.null2String(rs.getString("workcode"));
+        String token = new GetE10TokenV2().getToken(loginid);
         if (token != null) {
             String finalUrl = E10Config.getE10Url()+"/papi/open/singleSignon?singleToken="+token+"&oauthType=singlesign&redirect_uri=" + redirectUrl;
             response.sendRedirect(finalUrl);
