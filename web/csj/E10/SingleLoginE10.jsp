@@ -5,8 +5,10 @@
 <%@ page import="csj.E10.GetE10TokenV2" %>
 <jsp:useBean id="rs" class="weaver.conn.RecordSet" scope="page" />
 <%
+
     int userId = HrmUserVarify.getUser(request, response).getUID();
     String redirectUrl = request.getParameter("redirectUrl");
+    String E10Link = Util.null2String(request.getParameter("E10Link"));
     if (Util.null2String(redirectUrl).equals(""))
         redirectUrl = "http://10.244.2.46:10600/portal/view/1183305232845447260?cusMenuId=1183305232845447260&urlPageTitle=57O757uf6aaW6aG1";
     else
@@ -24,7 +26,7 @@
         String loginid = Util.null2String(rs.getString("workcode"));
         String token = new GetE10TokenV2().getToken(loginid);
         if (token != null) {
-            String finalUrl = E10Config.getE10Url()+"/papi/open/singleSignon?singleToken="+token+"&oauthType=singlesign&redirect_uri=" + redirectUrl;
+            String finalUrl = (E10Link.isEmpty()?E10Config.getE10Url():E10Link) + "/papi/open/singleSignon?singleToken="+token+"&oauthType=singlesign&redirect_uri=" + redirectUrl;
             response.sendRedirect(finalUrl);
         }
     } else {
