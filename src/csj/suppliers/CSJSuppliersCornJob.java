@@ -15,6 +15,7 @@ import java.util.Date;
  * @Version: 1.0
  */
 public class CSJSuppliersCornJob extends BaseCronJob {
+
     @Override
     public void execute() {
         RecordSet rs = new RecordSet();
