@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" %>
 <%@ page import="weaver.general.Util"%>
 <%@ page import="weaver.hrm.HrmUserVarify" %>
-<%@ page import="csj.treas_off.GetTreasTokenV2" %>
+<%@ page import="csj.treas_off.GetTreasTokenV4" %>
 <%@ page import="csj.treas_off.TreasConfig" %>
 <%@ page import="java.io.PrintWriter" %>
 
@@ -21,7 +21,7 @@
     rs.execute(sql);
     if (rs.next()) {
         String workcode = Util.null2String(rs.getString("workcode"));
-        String token = new GetTreasTokenV2().getToken(workcode);
+        String token = new GetTreasTokenV4().getToken(workcode);
         if (token != null) {
             PrintWriter writer = response.getWriter();
             writer.println("token => "+token);

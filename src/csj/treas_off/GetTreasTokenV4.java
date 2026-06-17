@@ -8,11 +8,11 @@ import org.json.JSONObject;
  * @Author: 付金明
  * @Date: 2026/5/6 11:46
  * @PackageName: csj.treas_off
- * @ClassName: GetTreasTokenV2
+ * @ClassName: GetTreasTokenV4
  * @Description: 司库OSS
  * @Version: 1.0
  */
-public class GetTreasTokenV2 {
+public class GetTreasTokenV4 {
 
     /**
      * 获取司库 token 工号传入形式
@@ -44,8 +44,10 @@ public class GetTreasTokenV2 {
             Console.log("jsonObject = " + jsonObject);
 
             Response response = client.newCall(request).execute();
-
+            Console.log("code => " + response.code());
             JSONObject rtnJson = new JSONObject(response.body().string());
+
+
 
             //对返回报文解析：接口返回状态
 //            JSONObject head = rtnJson.getJSONObject("head");
@@ -57,6 +59,7 @@ public class GetTreasTokenV2 {
 //            }
 
             Console.log ("rtnJson=>"+rtnJson);
+
             //读取token字段
             String token = rtnJson.optString("token");
             if (token == null || token.isEmpty()) {
@@ -73,7 +76,7 @@ public class GetTreasTokenV2 {
 
     public static void main(String[] args) {
 //        TreasConfig.properties.init();
-        GetTreasTokenV2 getTreasToken = new GetTreasTokenV2();
+        GetTreasTokenV4 getTreasToken = new GetTreasTokenV4();
         String token = getTreasToken.getToken("CSJTZ051");
         System.out.println("token = " + token);
     }

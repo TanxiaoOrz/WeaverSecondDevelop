@@ -22,8 +22,8 @@ public class TreasConfig {
         return instance;
     }
     //集团客户号
-    private String CIF_SEQ = "2000001188";
-    private String URL = "http://38.240.1.122:8080";
+    private String CIF_SEQ = "2000000009";
+    private String URL = "http://38.238.238.218:8080";
 
 
     private RecordSet rs;
