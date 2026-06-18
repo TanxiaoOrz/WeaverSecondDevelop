@@ -1,19 +1,18 @@
 package rundo.quote;
 
-import rundo.util.ApiUtil;
+import rundo.util.ApiUtilV6;
 import rundo.util.Console;
 import weaver.conn.RecordSet;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Description: 子流程干预并删除 — 判断是否有已提交的子流程，并对子流程进行干预操作后删除
  * @Author: 张骏山
  * @Date: 2026/6/17
  * @PackageName: rundo.quote
- * @ClassName: QuoteRequestWithdrawCmd
+ * @ClassName: QuoteRequestWithdrawCmdV16
  * @Version: 1.0
  * <p>
  * 配置说明（在 QuoteConfig 中配置以下属性）：
@@ -23,37 +22,27 @@ import java.util.concurrent.ConcurrentHashMap;
  * subProcessRequestIdColumn — 子流程requestId列名
  * subProcessCustomId — 子流程表单对应的customId
  */
-public class QuoteRequestWithdrawCmd {
+public class QuoteRequestWithdrawCmdV16 {
 
     /**
      * 子流程表单名称
      */
     private final String subFormName;
     /**
-     * 当前流程bds人员
-     */
-    private final String BDSs;
-    /**
      * 干预备注
      */
 //    private String withDrawMark = "退回重启-子流程处理";
-    private final int mainId;
-
-    private final int aimNodeId;
+    private final int mainRequestId;
     private final String currentReferFileIds;
     private final RecordSet rs;
 
-    public QuoteRequestWithdrawCmd(String subFormName,
-                                   int aimNodeId,
-                                   int mainRequestId,
-                                   String currentReferFileIds,
-                                   String BDSs) {
+    public QuoteRequestWithdrawCmdV16(String subFormName,
+                                      int mainRequestId,
+                                      String currentReferFileIds) {
         this.subFormName = subFormName;
-        this.BDSs = BDSs;
-        this.aimNodeId = aimNodeId;
-        this.mainId = mainRequestId;
+        this.mainRequestId = mainRequestId;
         this.currentReferFileIds = currentReferFileIds;
-//        withDrawMark = ApiUtil.getPropsWithDefault("withDrawMark",withDrawMark);
+//        withDrawMark = ApiUtilV6.getPropsWithDefault("withDrawMark",withDrawMark);
         rs = new RecordSet();
     }
 
@@ -69,17 +58,17 @@ public class QuoteRequestWithdrawCmd {
      * @return true 存在已提交的子流程, false 不存在
      */
     public boolean hasSubProcessSubmitted() {
-        Console.log("检查是否存在已提交的子流程, mainRequestId = " + mainId);
+        Console.log("检查是否存在已提交的子流程, mainRequestId = " + mainRequestId);
 
-        if (mainId < 0) {
+        if (mainRequestId < 0) {
             Console.log("mainRequestId 无效, 无法检查子流程");
-            return false;
+            return true;
         }
         String querySubmitSql = "select requestid, id "
-                + "from  " + subFormName
-                + "where mainid = " + mainId
-                + "and bjckwj= '" + currentReferFileIds + "'"
-                + "and (gdrq is null or gdrq = '') ";
+                + " from  " + subFormName
+                + " where zlcrequestid = " + mainRequestId
+                + " and bjckwj like '" + currentReferFileIds + "'"
+                + " and (gdrq is not null and gdrq != '') ";
         Console.log("查询子流程SQL: " + querySubmitSql);
         rs.executeQuery(querySubmitSql);
 
@@ -100,10 +89,10 @@ public class QuoteRequestWithdrawCmd {
      * @return true 全部处理成功, false 存在失败
      */
     public boolean withdrawMainRequest(int uid) {
-        Console.log("开始干预并删除子流程, mainRequestId = " + mainId
-                + ", BDSs = " + BDSs + ", aimNodeId = " + aimNodeId + ", uid = " + uid);
+        Console.log("开始干预并删除子流程, mainRequestId = " + mainRequestId
+                + ", uid = " + uid);
 
-        if (mainId < 0) {
+        if (mainRequestId < 0) {
             Console.log("mainRequestId 无效, 无法处理子流程");
             return false;
         }
@@ -111,9 +100,9 @@ public class QuoteRequestWithdrawCmd {
         // 1. 查询所有当前轮次子流程
         List<Integer> subList = new ArrayList<>();
         String sql = "select requestid, id "
-                + "from  " + subFormName
-                + "where mainid = " + mainId
-                + "and bjckwj= '" + currentReferFileIds + "'";
+                + " from  " + subFormName
+                + " where zlcrequestid = " + mainRequestId
+                + " and bjckwj like '" + currentReferFileIds + "'";
         Console.log("查询子流程SQL: " + sql);
         rs.executeQuery(sql);
 
@@ -126,14 +115,14 @@ public class QuoteRequestWithdrawCmd {
 
         // 2. 逐个处理子流程：删除
         for (Integer sub : subList) {
-            if (!ApiUtil.getInstance().deleteRequest(String.valueOf(sub))) {
+            if (!ApiUtilV6.getInstance().deleteRequest((sub))) {
                 Console.log("删除子流程失败, requestId = " + sub);
                 return false;
             }
         }
 
 //        // 3. 干预主流程回到分发节点
-//        if (!ApiUtil.getInstance().interventionRequest(mainRequestId, BDSs, aimNodeId, uid, withDrawMark)) {
+//        if (!ApiUtilV6.getInstance().interventionRequest(mainRequestId, BDSs, aimNodeId, uid, withDrawMark)) {
 //            Console.log("干预主流程失败, mainRequestId = " + mainRequestId);
 //            return false;
 //        }
@@ -143,36 +132,30 @@ public class QuoteRequestWithdrawCmd {
     }
 
     public boolean isAllSubmitted() {
-        Console.log("检查所有子流程是否均已处理完毕, mainRequestId = " + mainId + " currentReferFileIds = " + currentReferFileIds);
+        Console.log("检查所有子流程是否均已处理完毕, mainRequestId = " + mainRequestId + " currentReferFileIds = " + currentReferFileIds);
 
-        if (mainId < 0) {
+        if (mainRequestId < 0) {
             Console.log("mainRequestId 无效, 无法检查子流程");
             return false;
         }
 
         String querySubmitSql = "select id, requestid  "
-                + "from  " + subFormName
-                + "where mainid = " + mainId
-                + "and bjckwj= '" + currentReferFileIds + "'"
-                + "and ";
+                + " from  " + subFormName
+                + " where zlcrequestid = " + mainRequestId
+                + " and bjckwj like '" + currentReferFileIds + "'"
+                + " and (gdrq is null or gdrq = '')";
         Console.log("查询子流程SQL: " + querySubmitSql);
         rs.executeQuery(querySubmitSql);
 
-        if (rs.next()) {
-            int cnt = rs.getInt("cnt");
-            Console.log("当前轮次子流程数量: " + cnt);
-            return cnt == 0;
-        }
-
-        return true;
+        return !rs.next();
     }
 
-    public boolean withDrawSubRequest(String submittedFileIds, String recordFormName, String submittedFileColumns) {
-        Console.log("开始撤销审批记录, mainRequestId = " + mainId + ", submittedFileIds = " + submittedFileIds + ", recordFormName = " + recordFormName);
-        String deleteSql = "delete from " + recordFormName + " where " + submittedFileColumns + " = '" + submittedFileIds + "' and mainid = " + mainId;
+    public boolean withDrawSubRequest(String submittedFileIds, String recordFormName) {
+        Console.log("开始撤销审批记录, mainRequestId = " + mainRequestId + ", submittedFileIds = " + submittedFileIds + ", recordFormName = " + recordFormName);
+        String deleteSql = "delete from " + recordFormName + " where bjwj like '" + submittedFileIds+"'";
         Console.log("删除审批记录SQL: " + deleteSql);
         rs.executeUpdate(deleteSql);
-        Console.log("撤销审批记录成功, mainRequestId = " + mainId + ", submittedFileIds = " + submittedFileIds);
+        Console.log("撤销审批记录成功, mainRequestId = " + mainRequestId + ", submittedFileIds = " + submittedFileIds);
         return true;
     }
 
@@ -189,9 +172,9 @@ public class QuoteRequestWithdrawCmd {
 //    private static class CacheEntry {
 //        final String bds;
 //        final long expiryTime;
-//        final QuoteRequestWithdrawCmd data;
+//        final QuoteRequestWithdrawCmdV16 data;
 //
-//        CacheEntry(String bds, QuoteRequestWithdrawCmd data) {
+//        CacheEntry(String bds, QuoteRequestWithdrawCmdV16 data) {
 //            this.bds = bds;
 //            this.data = data;
 //            this.expiryTime = System.currentTimeMillis() + CACHE_TTL_MS;
@@ -213,7 +196,7 @@ public class QuoteRequestWithdrawCmd {
 //     * @param BDSs           当前 bds 值（用于校验一致性）
 //     * @return 缓存的数据对象，或 null（未命中/过期/bds 变更）
 //     */
-//    public static QuoteRequestWithdrawCmd getCachedMainRequestData(String subFormName,
+//    public static QuoteRequestWithdrawCmdV16 getCachedMainRequestData(String subFormName,
 //                                                                   int aimNodeId,
 //                                                                   int mainRequestId,
 //                                                                   String currentReferFileIds,
@@ -221,7 +204,7 @@ public class QuoteRequestWithdrawCmd {
 //        CacheEntry entry = mainRequestCache.get(mainRequestId);
 //        // 无缓存 过期 失效
 //        if (entry == null||entry.isExpired()||!entry.bds.equals(BDSs)) {
-//            QuoteRequestWithdrawCmd data = new QuoteRequestWithdrawCmd(subFormName, aimNodeId, mainRequestId, currentReferFileIds, BDSs);
+//            QuoteRequestWithdrawCmdV16 data = new QuoteRequestWithdrawCmdV16(subFormName, aimNodeId, mainRequestId, currentReferFileIds, BDSs);
 //            mainRequestCache.put(mainRequestId,new CacheEntry(BDSs,data));
 //            return data;
 //        }
