@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" %>
 <%@ page import="weaver.general.Util,weaver.hrm.HrmUserVarify" %>
-<%@ page import="rundo.quote.QuoteRequestWithdrawCmd" %>
 <%@ page import="rundo.util.Console" %>
+<%@ page import="rundo.quote.*" %>
 <%
     try {
         String type = Util.null2String(request.getParameter("type"));
@@ -14,12 +14,12 @@
         String BDSs = Util.null2String(request.getParameter("BDSs"));
         int userId = HrmUserVarify.getUser(request, response).getUID();
 
-        QuoteRequestWithdrawCmd withdrawCmd = QuoteRequestWithdrawCmd.getCachedMainRequestData(subFormName,
-                aimNodeId,
-                mainRequestId,
-                currentReferFileIds,
-                BDSs);
-
+//        QuoteRequestWithdrawCmdV16 withdrawCmd = QuoteRequestWithdrawCmdV16.getCachedMainRequestData(subFormName,
+//                aimNodeId,
+//                mainRequestId,
+//                currentReferFileIds,
+//                BDSs);
+        QuoteRequestWithdrawCmdV16 withdrawCmd = new QuoteRequestWithdrawCmdV16(subFormName, mainRequestId, currentReferFileIds);
 
         if ("check".equals(type)) {
             boolean result = withdrawCmd.hasSubProcessSubmitted();

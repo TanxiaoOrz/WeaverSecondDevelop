@@ -1,6 +1,6 @@
 package rundo.quote;
 
-import rundo.util.ApiUtil;
+import rundo.util.ApiUtilV6;
 import rundo.util.Console;
 import weaver.conn.RecordSet;
 import weaver.formmode.customjavacode.AbstractModeExpandJavaCodeNew;
@@ -15,12 +15,12 @@ import java.util.Map;
  * @Author: 张骏山
  * @Date: 2026/5/22 14:08
  * @PackageName: rundo.quote
- * @ClassName: RestartQuoteExpend
+ * @ClassName: RestartQuoteExpendV4
  * @Description: 报价重启按钮页面拓展
  * @Version: 1.0
  */
 
-public class RestartQuoteExpend extends AbstractModeExpandJavaCodeNew {
+public class RestartQuoteExpendV4 extends AbstractModeExpandJavaCodeNew {
 
     /**
      * 部署前执行内容说明
@@ -35,13 +35,13 @@ public class RestartQuoteExpend extends AbstractModeExpandJavaCodeNew {
     private String interventionRemark = "退回重启";
     private int customId;
 
-    public RestartQuoteExpend() {
+    public RestartQuoteExpendV4() {
         super();
-        formName = ApiUtil.getPropsWithDefault("formName", formName);
-        BDSColumnName = ApiUtil.getPropsWithDefault("BDSColumnName", BDSColumnName);
-        aimNodeColumn = ApiUtil.getPropsWithDefault("aimNodeColumn", aimNodeColumn);
-        requestIdColumn = ApiUtil.getPropsWithDefault("requestIdColumn", requestIdColumn);
-        customId = Util.getIntValue(ApiUtil.getPropsWithDefault("customId", String.valueOf(customId)));
+        formName = ApiUtilV6.getPropsWithDefault("formName", formName);
+        BDSColumnName = ApiUtilV6.getPropsWithDefault("BDSColumnName", BDSColumnName);
+        aimNodeColumn = ApiUtilV6.getPropsWithDefault("aimNodeColumn", aimNodeColumn);
+        requestIdColumn = ApiUtilV6.getPropsWithDefault("requestIdColumn", requestIdColumn);
+        customId = Util.getIntValue(ApiUtilV6.getPropsWithDefault("customId", String.valueOf(customId)));
     }
 
 
@@ -62,12 +62,12 @@ public class RestartQuoteExpend extends AbstractModeExpandJavaCodeNew {
             int uid = user.getUID();
             RequestInfo requestInfo = (RequestInfo) map.get("RequestInfo");
             if (requestInfo == null) {
-                return ApiUtil.rtnError("RequestInfo 为空, 请联系管理员");
+                return ApiUtilV6.rtnError("RequestInfo 为空, 请联系管理员");
             }
             int billid = Util.getIntValue(requestInfo.getRequestid());
             int modeid = Util.getIntValue(requestInfo.getWorkflowid());
             if (billid < 0 || modeid < 0 || uid < 0) {
-                return ApiUtil.rtnError("关键数据获取失败, 请联系管理员",
+                return ApiUtilV6.rtnError("关键数据获取失败, 请联系管理员",
                         "关键数据获取失败, billid, modeid, uid 分别为: " + billid + ", " + modeid + ", " + uid);
             }
 
@@ -79,24 +79,24 @@ public class RestartQuoteExpend extends AbstractModeExpandJavaCodeNew {
                 int aimNodeId = recordSet.getInt(aimNodeColumn);
                 int requestId = recordSet.getInt(requestIdColumn);
                 if (BDSs.isEmpty()) {
-                    return ApiUtil.rtnError("BDS为空, 请联系管理员");
+                    return ApiUtilV6.rtnError("BDS为空, 请联系管理员");
                 }
                 if (aimNodeId < 0) {
-                    return ApiUtil.rtnError("目标节点为空, 请联系管理员");
+                    return ApiUtilV6.rtnError("目标节点为空, 请联系管理员");
                 }
                 if (requestId < 0) {
-                    return ApiUtil.rtnError("对应流程为空, 请联系管理员");
+                    return ApiUtilV6.rtnError("对应流程为空, 请联系管理员");
                 }
 
-                if (!ApiUtil.getInstance().interventionRequest(requestId, BDSs, aimNodeId, uid, interventionRemark)) {
-                    return ApiUtil.rtnError("干预流程回到BDS分发节点失败, 请联系管理员");
+                if (!ApiUtilV6.getInstance().interventionRequest(requestId, BDSs, aimNodeId, uid, interventionRemark)) {
+                    return ApiUtilV6.rtnError("干预流程回到BDS分发节点失败, 请联系管理员");
                 }
-                if (!ApiUtil.getInstance().deleteData(billid, modeid, uid, customId)) {
-                    return ApiUtil.rtnError("删除本条数据失败, 请联系管理员");
+                if (!ApiUtilV6.getInstance().deleteData(billid, modeid, uid, customId)) {
+                    return ApiUtilV6.rtnError("删除本条数据失败, 请联系管理员");
                 }
             }
         } catch (Exception e) {
-            return ApiUtil.rtnError("代码执行报错, 请联系管理员", "代码执行报错 => " + e.getMessage());
+            return ApiUtilV6.rtnError("代码执行报错, 请联系管理员", "代码执行报错 => " + e.getMessage());
         }
         return new HashMap<>();
     }
