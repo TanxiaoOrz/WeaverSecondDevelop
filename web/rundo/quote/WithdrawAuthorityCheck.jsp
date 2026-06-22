@@ -20,21 +20,15 @@
 //                currentReferFileIds,
 //                BDSs);
         QuoteRequestWithdrawCmdV16 withdrawCmd = new QuoteRequestWithdrawCmdV16(subFormName, mainRequestId, currentReferFileIds);
-
-        if ("check".equals(type)) {
-            boolean result = withdrawCmd.hasSubProcessSubmitted();
+        boolean result;
+        if ("BDS".equals(type)) {
+            result = withdrawCmd.hasSubProcessSubmitted();
             out.print(result ? 0 : 1);
-        } else if ("withdraw".equals(type)) {
-            if (withdrawCmd.hasSubProcessSubmitted()) {
-                out.print("当前存在子流程已填写提交,禁止撤回");
-                return;
-            } else if (withdrawCmd.withdrawMainRequest(userId)) {
-                out.print(1);
-            } else {
-                out.print("撤回失败,请联系管理员");
-            }
+        } else if ("Approval".equals(type)) {
+            result = withdrawCmd.isAllSubmitted();
+            out.print(result ? 1 : 0);
         } else {
-            out.print("错误的请求参数");
+            out.print("错误的请求参数,请联系管理员");
             return;
         }
     } catch (Exception e) {
