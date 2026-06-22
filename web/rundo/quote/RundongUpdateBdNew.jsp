@@ -8,6 +8,12 @@
         if (!requestid.isEmpty()) {
             String newBD = Util.null2String(request.getParameter("bd"));
             String newBDName = Util.null2String(request.getParameter("name"));
+            String getCurrentFt = "select currentft from bjmonitor where requestid = " + requestid;
+            rs.execute(getCurrentFt);
+            String currentFt = "";
+            if (rs.next()) {
+                currentFt = Util.null2String(rs.getString("currentft"));
+            }
 
             // 当前登录人ID姓名
             int userId = HrmUserVarify.getUser(request, response).getUID();
@@ -24,7 +30,7 @@
 
 
             // 原有bd人员ID
-            String getOriginalBDSql = "select bdspr from formtable_main_427 where requestid = " + requestid;
+            String getOriginalBDSql = "select bdspr from "+ currentFt +" where requestid = " + requestid;
             rs.execute(getOriginalBDSql);
             String lastbd = "";
             if (rs.next()) {
@@ -48,9 +54,9 @@
             String newRecord = lastname + " 在 " + dateTime + "修改了bd人员 由" + lastbdname + "修改为" + newBDName;
 
             // 更新业务字段
-            String updateBDSql = "UPDATE formtable_main_427 set bdspr = '" + newBD + "' WHERE requestid = " + requestid;
+            String updateBDSql = "UPDATE "+ currentFt +" set bdspr = '" + newBD + "' WHERE requestid = " + requestid;
             // 更新日志
-            String updateLogSql = "UPDATE formtable_main_427 SET bgjl = CONCAT(bgjl, '\n', '" + newRecord + "') WHERE requestid = " + requestid;
+            String updateLogSql = "UPDATE "+ currentFt +" SET bgjl = CONCAT(bgjl, '\n', '" + newRecord + "') WHERE requestid = " + requestid;
 
             rs.execute(updateBDSql);
             rs.execute(updateLogSql);

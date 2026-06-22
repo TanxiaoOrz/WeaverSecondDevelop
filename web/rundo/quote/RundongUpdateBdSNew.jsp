@@ -6,9 +6,14 @@
     try {
         String requestid = Util.null2String(request.getParameter("requestid"));
         if (!requestid.isEmpty()) {
-            String newBDS = Util.null2String(request.getParameter("bd"));
+            String newBDS = Util.null2String(request.getParameter("bds"));
             String newBDSName = Util.null2String(request.getParameter("name"));
-
+            String getCurrentFt = "select currentft from bjmonitor where requestid = " + requestid;
+            rs.execute(getCurrentFt);
+            String currentFt = "";
+            if (rs.next()) {
+                currentFt = Util.null2String(rs.getString("currentft"));
+            }
             // 当前登录人ID姓名
             int userId = HrmUserVarify.getUser(request, response).getUID();
             String lastname = "";
@@ -22,19 +27,24 @@
                 }
             }
 
-
             // 原有bds人员ID
-            String getOriginalBDSSql = "select bdsspry from formtable_main_427 where requestid = " + requestid;
+            String getOriginalBDSSql = "select bdsspry from "+ currentFt +" where requestid = " + requestid;
             rs.execute(getOriginalBDSSql);
             String lastbds = "";
             if (rs.next()) {
                 lastbds = Util.null2String(rs.getString("bdsspry"));
             }
 
-            // 原有bds人员姓名
+            // 原有bds人员姓名 —— 这里已修复
             String lastbdsname = "";
             if (!lastbds.isEmpty()) {
-                String getOriginalBDSNameSql = "SELECT STRING_AGG(lastname, ',') AS lastnames FROM hrmresource WHERE id IN  " + lastbds;
+                String getOriginalBDSNameSql = "SELECT " +
+                        "STUFF((" +
+                        "SELECT ',' + lastname " +
+                        "FROM hrmresource " +
+                        "WHERE id IN (" + lastbds + ") " +  // 关键修复：加括号
+                        "FOR XML PATH(''), TYPE " +
+                        ").value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS lastnames";
                 rs.execute(getOriginalBDSNameSql);
                 if (rs.next()) {
                     lastbdsname = Util.null2String(rs.getString("lastnames"));
@@ -45,12 +55,12 @@
             Date now = new Date();
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String dateTime = sdf.format(now);
-            String newRecord = lastname + " 在 " + dateTime + "修改了bd人员 由" + lastbdsname + "修改为" + newBDSName;
+            String newRecord = lastname + " 在 " + dateTime + " 修改了BDS人员，由【" + lastbdsname + "】修改为【" + newBDSName + "】";
 
             // 更新业务字段
-            String updateBDSSql = "UPDATE formtable_main_427 set bdsspry = '" + newBDS + "' WHERE requestid = " + requestid;
+            String updateBDSSql = "UPDATE "+ currentFt +" set bdsspry = '" + newBDS + "' WHERE requestid = " + requestid;
             // 更新日志
-            String updateLogSql = "UPDATE formtable_main_427 SET bgjl = CONCAT(bgjl, '\n', '" + newRecord + "') WHERE requestid = " + requestid;
+            String updateLogSql = "UPDATE "+ currentFt +" SET bgjl = ISNULL(bgjl, '') + '\n' + '" + newRecord + "' WHERE requestid = " + requestid;
 
             rs.execute(updateBDSSql);
             rs.execute(updateLogSql);
@@ -61,6 +71,6 @@
         }
     } catch (Exception e) {
         out.print("fail：" + e.getMessage());
-//        Console.log(e.getMessage());
+        e.printStackTrace();
     }
 %>
