@@ -14,12 +14,12 @@
         String BDSs = Util.null2String(request.getParameter("BDSs"));
         int userId = HrmUserVarify.getUser(request, response).getUID();
 
-//        QuoteRequestWithdrawCmdV16 withdrawCmd = QuoteRequestWithdrawCmdV16.getCachedMainRequestData(subFormName,
+//        QuoteRequestWithdrawCmd withdrawCmd = QuoteRequestWithdrawCmd.getCachedMainRequestData(subFormName,
 //                aimNodeId,
 //                mainRequestId,
 //                currentReferFileIds,
 //                BDSs);
-        QuoteRequestWithdrawCmdV16 withdrawCmd = new QuoteRequestWithdrawCmdV16(subFormName, mainRequestId, currentReferFileIds);
+        QuoteRequestWithdrawCmd withdrawCmd = new QuoteRequestWithdrawCmd(subFormName, mainRequestId, currentReferFileIds);
         boolean result;
         if ("BDS".equals(type)) {
             result = withdrawCmd.hasSubProcessSubmitted();

@@ -1,6 +1,6 @@
 package rundo.quote;
 
-import rundo.util.ApiUtilV6;
+import rundo.util.ApiUtil;
 import rundo.util.Console;
 import weaver.conn.RecordSet;
 
@@ -12,7 +12,7 @@ import java.util.List;
  * @Author: 张骏山
  * @Date: 2026/6/17
  * @PackageName: rundo.quote
- * @ClassName: QuoteRequestWithdrawCmdV16
+ * @ClassName: QuoteRequestWithdrawCmd
  * @Version: 1.0
  * <p>
  * 配置说明（在 QuoteConfig 中配置以下属性）：
@@ -22,7 +22,7 @@ import java.util.List;
  * subProcessRequestIdColumn — 子流程requestId列名
  * subProcessCustomId — 子流程表单对应的customId
  */
-public class QuoteRequestWithdrawCmdV16 {
+public class QuoteRequestWithdrawCmd {
 
     /**
      * 子流程表单名称
@@ -36,13 +36,13 @@ public class QuoteRequestWithdrawCmdV16 {
     private final String currentReferFileIds;
     private final RecordSet rs;
 
-    public QuoteRequestWithdrawCmdV16(String subFormName,
-                                      int mainRequestId,
-                                      String currentReferFileIds) {
+    public QuoteRequestWithdrawCmd(String subFormName,
+                                   int mainRequestId,
+                                   String currentReferFileIds) {
         this.subFormName = subFormName;
         this.mainRequestId = mainRequestId;
         this.currentReferFileIds = currentReferFileIds;
-//        withDrawMark = ApiUtilV6.getPropsWithDefault("withDrawMark",withDrawMark);
+//        withDrawMark = ApiUtil.getPropsWithDefault("withDrawMark",withDrawMark);
         rs = new RecordSet();
     }
 
@@ -115,14 +115,14 @@ public class QuoteRequestWithdrawCmdV16 {
 
         // 2. 逐个处理子流程：删除
         for (Integer sub : subList) {
-            if (!ApiUtilV6.getInstance().deleteRequest((sub))) {
+            if (!ApiUtil.getInstance().deleteRequest((sub))) {
                 Console.log("删除子流程失败, requestId = " + sub);
                 return false;
             }
         }
 
 //        // 3. 干预主流程回到分发节点
-//        if (!ApiUtilV6.getInstance().interventionRequest(mainRequestId, BDSs, aimNodeId, uid, withDrawMark)) {
+//        if (!ApiUtil.getInstance().interventionRequest(mainRequestId, BDSs, aimNodeId, uid, withDrawMark)) {
 //            Console.log("干预主流程失败, mainRequestId = " + mainRequestId);
 //            return false;
 //        }
@@ -172,9 +172,9 @@ public class QuoteRequestWithdrawCmdV16 {
 //    private static class CacheEntry {
 //        final String bds;
 //        final long expiryTime;
-//        final QuoteRequestWithdrawCmdV16 data;
+//        final QuoteRequestWithdrawCmd data;
 //
-//        CacheEntry(String bds, QuoteRequestWithdrawCmdV16 data) {
+//        CacheEntry(String bds, QuoteRequestWithdrawCmd data) {
 //            this.bds = bds;
 //            this.data = data;
 //            this.expiryTime = System.currentTimeMillis() + CACHE_TTL_MS;
@@ -196,7 +196,7 @@ public class QuoteRequestWithdrawCmdV16 {
 //     * @param BDSs           当前 bds 值（用于校验一致性）
 //     * @return 缓存的数据对象，或 null（未命中/过期/bds 变更）
 //     */
-//    public static QuoteRequestWithdrawCmdV16 getCachedMainRequestData(String subFormName,
+//    public static QuoteRequestWithdrawCmd getCachedMainRequestData(String subFormName,
 //                                                                   int aimNodeId,
 //                                                                   int mainRequestId,
 //                                                                   String currentReferFileIds,
@@ -204,7 +204,7 @@ public class QuoteRequestWithdrawCmdV16 {
 //        CacheEntry entry = mainRequestCache.get(mainRequestId);
 //        // 无缓存 过期 失效
 //        if (entry == null||entry.isExpired()||!entry.bds.equals(BDSs)) {
-//            QuoteRequestWithdrawCmdV16 data = new QuoteRequestWithdrawCmdV16(subFormName, aimNodeId, mainRequestId, currentReferFileIds, BDSs);
+//            QuoteRequestWithdrawCmd data = new QuoteRequestWithdrawCmd(subFormName, aimNodeId, mainRequestId, currentReferFileIds, BDSs);
 //            mainRequestCache.put(mainRequestId,new CacheEntry(BDSs,data));
 //            return data;
 //        }

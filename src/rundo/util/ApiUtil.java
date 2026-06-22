@@ -22,12 +22,12 @@ import java.util.Map;
  * @Author: 张骏山
  * @Date: 2026/6/17
  * @PackageName: rundo.util
- * @ClassName: ApiUtilV6
+ * @ClassName: ApiUtil
  * @Version: 1.0
  */
-public class ApiUtilV6 {
+public class ApiUtil {
 
-    private static volatile ApiUtilV6 instance;
+    private static volatile ApiUtil instance;
 
     private final String appId;
     private final String baseUrl;
@@ -36,7 +36,7 @@ public class ApiUtilV6 {
     /**
      * 私有构造函数，从 QuoteConfig 配置中加载 appId 和 baseUrl
      */
-    private ApiUtilV6() {
+    private ApiUtil() {
         this.appId = getPropsWithDefault("appId", "rundo");
         this.baseUrl = getPropsWithDefault("baseUrl", "http://127.0.0.1:8081");
     }
@@ -44,22 +44,22 @@ public class ApiUtilV6 {
     /**
      * 私有构造函数，从 QuoteConfig 配置中加载 appId 和 baseUrl
      */
-    private ApiUtilV6(String appId, String baseUrl) {
+    private ApiUtil(String appId, String baseUrl) {
         this.appId = appId;
         this.baseUrl = baseUrl;
     }
 
 
     /**
-     * 获取 ApiUtilV6 单例实例
+     * 获取 ApiUtil 单例实例
      *
-     * @return ApiUtilV6 单例
+     * @return ApiUtil 单例
      */
-    public static ApiUtilV6 getInstance() {
+    public static ApiUtil getInstance() {
         if (instance == null) {
-            synchronized (ApiUtilV6.class) {
+            synchronized (ApiUtil.class) {
                 if (instance == null) {
-                    instance = new ApiUtilV6();
+                    instance = new ApiUtil();
                 }
             }
         }

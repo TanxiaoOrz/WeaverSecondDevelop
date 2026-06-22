@@ -8,7 +8,7 @@ import weaver.soa.workflow.request.RequestInfo;
 import java.util.Arrays;
 
 @SuppressWarnings("unused")
-public class ApproverWithdrawActionV16 implements weaver.interfaces.workflow.action.Action {
+public class ApproverWithdrawAction implements weaver.interfaces.workflow.action.Action {
 
     String judgeNode;
     String recordFormName;
@@ -29,7 +29,7 @@ public class ApproverWithdrawActionV16 implements weaver.interfaces.workflow.act
             String submittedFileIds = Arrays.stream(mainEntries).filter(mainEntry -> mainEntry.getName().equals("txwcwj")).findFirst().get().getValue();
             //noinspection OptionalGetWithoutIsPresent
             String mainRequestId = Arrays.stream(mainEntries).filter(mainEntry -> mainEntry.getName().equals("zlcrequestid")).findFirst().get().getValue();
-            QuoteRequestWithdrawCmdV16 withdrawCmd = new QuoteRequestWithdrawCmdV16(subFormName,
+            QuoteRequestWithdrawCmd withdrawCmd = new QuoteRequestWithdrawCmd(subFormName,
                     Integer.parseInt(mainRequestId),
                     currentReferFileIds
             );

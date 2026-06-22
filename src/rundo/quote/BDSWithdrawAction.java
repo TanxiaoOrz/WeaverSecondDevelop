@@ -8,7 +8,7 @@ import weaver.soa.workflow.request.RequestInfo;
 import java.util.Arrays;
 
 @SuppressWarnings("unused")
-public class BDSWithdrawActionV15 implements weaver.interfaces.workflow.action.Action {
+public class BDSWithdrawAction implements weaver.interfaces.workflow.action.Action {
 
     String subFormName;
     String currentReferFileIdsColumn;
@@ -27,13 +27,13 @@ public class BDSWithdrawActionV15 implements weaver.interfaces.workflow.action.A
 
             //noinspection OptionalGetWithoutIsPresent
             String currentReferFileIds = Arrays.stream(mainEntries).filter(mainEntry -> mainEntry.getName().equals(currentReferFileIdsColumn)).findFirst().get().getValue();
-//            QuoteRequestWithdrawCmdV16 withdrawCmd = QuoteRequestWithdrawCmdV16.getCachedMainRequestData(subFormName,
+//            QuoteRequestWithdrawCmd withdrawCmd = QuoteRequestWithdrawCmd.getCachedMainRequestData(subFormName,
 //                    Integer.parseInt(aimNodeId),
 //                    Integer.parseInt(mainRequestId),
 //                    currentReferFileIds,
 //                    BDSs);
 
-            QuoteRequestWithdrawCmdV16 withdrawCmd = new QuoteRequestWithdrawCmdV16(subFormName,
+            QuoteRequestWithdrawCmd withdrawCmd = new QuoteRequestWithdrawCmd(subFormName,
                     Integer.parseInt(mainRequestId),
                     currentReferFileIds
             );
