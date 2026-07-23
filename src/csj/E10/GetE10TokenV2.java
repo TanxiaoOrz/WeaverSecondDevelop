@@ -22,12 +22,13 @@ public class GetE10TokenV2 {
         try {
 //            Console.log ("workCode=>"+workCode);
             JSONObject jsonObject = new JSONObject();
-            jsonObject.put("app_key", E10Config.getE10AppKey());
-            jsonObject.put("app_security", E10Config.getE10AppSecurity());
+            E10Config config = E10Config.getInstance();
+            jsonObject.put("app_key", config.getE10AppKey());
+            jsonObject.put("app_security", config.getE10AppSecurity());
             jsonObject.put("authType", "JOB_NUM");
             jsonObject.put("account", workCode);
 //            Console.log ("jsonObject=>"+jsonObject.toString());
-            String apiUrl = E10Config.getE10Url() + "/papi/openapi/oauth2/get_logintoken";
+            String apiUrl = config.getE10Url() + "/papi/openapi/oauth2/get_logintoken";
             OkHttpClient client = new OkHttpClient().newBuilder()
                     .build();
             MediaType mediaType = MediaType.parse("application/json");
