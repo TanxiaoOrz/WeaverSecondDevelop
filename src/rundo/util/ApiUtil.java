@@ -156,7 +156,7 @@ public class ApiUtil {
             params.put("remark", remark);
             Console.log("干预流程, params = " + params);
 
-            JSONObject rtnJson = exceuteRequest("/api/workflow/paService/doIntervenor", params, uid);
+            JSONObject rtnJson = executeRequest("/api/workflow/paService/doIntervenor", params, uid);
             Console.log("干预流程结果, rtnJson = " + rtnJson);
             return rtnJson.getString("code").equals("SUCCESS");
         } catch (Exception e) {
@@ -181,14 +181,14 @@ public class ApiUtil {
         try {
             Console.log("删除表单数据, billId = " + billId + ", modeId = " + modeId);
 
-            String apiUrl = baseUrl + "/api/cube/expand/deleteData?"
+            String apiUrl = "/api/cube/expand/deleteData?"
                     + "billids=" + billId
                     + "&customid=" + customId
                     + "&modeId=" + modeId
                     + "&type=0"
                     + "&viewtype=0";
             Console.log("删除数据, apiUrl = " + apiUrl);
-            JSONObject rtnJson = exceuteRequest("/api/cube/expand/deleteData", null, uid);
+            JSONObject rtnJson = executeRequest(apiUrl, uid);
             Console.log("删除数据结果, rtnJson = " + rtnJson);
             return rtnJson.getString("message").contains("删除成功");
         } catch (Exception e) {
@@ -216,7 +216,7 @@ public class ApiUtil {
             if (otherParams != null && !otherParams.isEmpty())
                 apiUrl += ("&otherParams=" + otherParams);
             Console.log("删除流程, apiUrl = " + apiUrl);
-            JSONObject rtnJson = exceuteRequest(apiUrl, null, uid, "application/x-www-form-urlencoded");
+            JSONObject rtnJson = executeRequest(apiUrl, null, uid, "application/x-www-form-urlencoded");
             Console.log("删除流程结果, rtnJson = " + rtnJson);
             return rtnJson.getString("code").equals("SUCCESS");
         } catch (Exception e) {
@@ -226,12 +226,26 @@ public class ApiUtil {
     }
 
     @NotNull
-    private JSONObject exceuteRequest(String path, JSONObject params, int uid) throws IOException, JSONException {
-        return exceuteRequest(path, params, uid, "application/json");
+    private JSONObject executeRequest(String path, JSONObject params, int uid) throws IOException, JSONException {
+        return executeRequest(path, params, uid, "application/json");
+
     }
 
     @NotNull
-    private JSONObject exceuteRequest(String path, JSONObject params, int uid, String bodyType) throws IOException, JSONException {
+    private JSONObject executeRequest(String path, int uid) throws IOException, JSONException {
+        String apiUrl = baseUrl + path;
+        OkHttpClient client = new OkHttpClient().newBuilder().build();
+        Request request = getRequest(apiUrl, uid).get().build();
+        Console.log(request.toString());
+        Response response = client.newCall(request).execute();
+        String returnString = response.body().string();
+        Console.log(returnString);
+        return new JSONObject(returnString);
+
+    }
+
+    @NotNull
+    private JSONObject executeRequest(String path, JSONObject params, int uid, String bodyType) throws IOException, JSONException {
         String apiUrl = baseUrl + path;
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse(bodyType);
@@ -241,7 +255,9 @@ public class ApiUtil {
         Request request = getRequest(apiUrl, uid).post(body).build();
         Console.log(request.toString());
         Response response = client.newCall(request).execute();
-        return new JSONObject(response.body().string());
+        String returnString = response.body().string();
+        Console.log(returnString);
+        return new JSONObject(returnString);
     }
 
 
