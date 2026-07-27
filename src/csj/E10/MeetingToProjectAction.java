@@ -1,7 +1,6 @@
 package csj.E10;
 
 import csj.utils.Console;
-import okhttp3.*;
 import org.json.JSONObject;
 import weaver.interfaces.workflow.action.Action;
 import weaver.soa.workflow.request.RequestInfo;
@@ -54,30 +53,13 @@ public class MeetingToProjectAction implements Action {
      */
     public JSONObject callWebhook(String requestid) {
         try {
-            E10Config config = E10Config.getInstance(e10Code);
             E10Utils utils = E10Utils.getInstance(e10Code);
             JSONObject param = new JSONObject();
             param.put("access_token", utils.getAccessToken());
             param.put("requestid", requestid);
-
-            String apiUrl = config.getE10Url() + WEBHOOK_PATH;
-
-            OkHttpClient client = new OkHttpClient().newBuilder().build();
-            MediaType mediaType = MediaType.parse("application/json");
-            RequestBody body = RequestBody.create(mediaType, param.toString());
-            Request request = new Request.Builder()
-                    .url(apiUrl)
-                    .method("POST", body)
-                    .addHeader("Content-Type", "application/json")
-                    .build();
-            Response response = client.newCall(request).execute();
-            JSONObject rtnJson = new JSONObject(response.body().string());
-            Console.log(rtnJson.toString());
-            return rtnJson;
+            return utils.callWebhook(param, WEBHOOK_PATH);
         } catch (Exception e) {
-            java.io.StringWriter sw = new java.io.StringWriter();
-            e.printStackTrace(new java.io.PrintWriter(sw, true));
-            Console.log("callWebhook异常: requestid=" + requestid + ", error=" + e.getMessage() + "\n" + sw.toString());
+            Console.log("callWebhook异常: requestid=" + requestid + ", error=" + e.getMessage());
             return null;
         }
     }

@@ -6,6 +6,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import weaver.general.Util;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
@@ -167,6 +169,39 @@ public class E10Utils {
             e.printStackTrace();
             Console.log(e.getMessage());
             return "";
+        }
+    }
+
+    // ===== WebHook 通用调用方法 =====
+
+    /**
+     * 通用ESB-WebHook调用方法
+     * @param object 请求体JSON对象(调用方自行构建,需包含access_token等参数)
+     * @param path   URL路径,相对于E10_URL,例如 "/papi/openapi/api/open-esb/server/webhook/trigger/xxx"
+     * @return 响应JSONObject,异常时返回null
+     */
+    public JSONObject callWebhook(JSONObject object, String path) {
+        try {
+            String apiUrl = this.config.getE10Url() + path;
+
+            OkHttpClient client = new OkHttpClient().newBuilder().build();
+            MediaType mediaType = MediaType.parse("application/json");
+            RequestBody body = RequestBody.create(mediaType, object.toString());
+            Request request = new Request.Builder()
+                    .url(apiUrl)
+                    .method("POST", body)
+                    .addHeader("Content-Type", "application/json")
+                    .build();
+            Response response = client.newCall(request).execute();
+            JSONObject rtnJson = new JSONObject(response.body().string());
+            Console.log("callWebhook成功: path=" + path + ", response=" + rtnJson.toString());
+            return rtnJson;
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw, true));
+            Console.log("callWebhook异常: path=" + path + ", body=" + object.toString()
+                    + ", error=" + e.getMessage() + "\n" + sw.toString());
+            return null;
         }
     }
 
