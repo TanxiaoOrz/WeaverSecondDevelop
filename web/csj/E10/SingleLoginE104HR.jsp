@@ -2,7 +2,7 @@
 <%@ page import="weaver.general.Util" %>
 <%@ page import="weaver.hrm.HrmUserVarify" %>
 <%@ page import="csj.E10.E10Config" %>
-<%@ page import="csj.E10.GetE10TokenV3" %>
+<%@ page import="csj.E10.GetE10TokenV5" %>
 <jsp:useBean id="rs" class="weaver.conn.RecordSet" scope="page"/>
 <jsp:useBean id="rci" class="weaver.hrm.resource.ResourceComInfo" scope="page"/>
 <%
@@ -31,7 +31,7 @@
     if (rs.next()) {
         String certificatenum = Util.null2String(rs.getString(1));
 
-        String token = new GetE10TokenV3().getToken(loginid);
+        String token = new GetE10TokenV5().getToken(loginid);
         if (token != null) {
             String finalUrl = E10Config.getInstance().getE10Url() + "/papi/open/singleSignon?singleToken=" + token + "&oauthType=singlesign&redirect_uri=" + redirectUrl + certificatenum;
             response.sendRedirect(finalUrl);

@@ -1,5 +1,6 @@
 package csj.E10;
 
+import csj.utils.Console;
 import okhttp3.*;
 import org.json.JSONObject;
 
@@ -11,7 +12,7 @@ import org.json.JSONObject;
  * @Description: 改造成workcode传入形式
  * @Version: 1.0
  */
-public class GetE10TokenV3 {
+public class GetE10TokenV5 {
 
     private E10Config config;
 
@@ -22,14 +23,14 @@ public class GetE10TokenV3 {
      */
     public String getToken(String workCode) {
         try {
-//            Console.log ("workCode=>"+workCode);
+            Console.log ("workCode=>"+workCode);
             JSONObject jsonObject = new JSONObject();
 
             jsonObject.put("app_key", config.getE10AppKey());
             jsonObject.put("app_security", config.getE10AppSecurity());
             jsonObject.put("authType", "JOB_NUM");
             jsonObject.put("account", workCode);
-//            Console.log ("jsonObject=>"+jsonObject.toString());
+            Console.log ("jsonObject=>"+jsonObject.toString());
             String apiUrl = config.getE10Url() + "/papi/openapi/oauth2/get_logintoken";
             OkHttpClient client = new OkHttpClient().newBuilder()
                     .build();
@@ -42,29 +43,29 @@ public class GetE10TokenV3 {
                     .build();
             Response response = client.newCall(request).execute();
             JSONObject rtnJson = new JSONObject(response.body().string());
-//            Console.log ("rtnJson=>"+rtnJson);
+            Console.log ("rtnJson=>"+rtnJson);
             String token = rtnJson.getString("etLoginToken");
-//            Console.log ("token=>"+token);
+            Console.log ("token=>"+token);
             return token;
         }catch (Exception e){
-//            Console.log ("获取token失败,验证异常:"+e.getMessage());
+            Console.log ("获取token失败,验证异常:"+e.getMessage());
             return "";
         }
     }
 
-    public GetE10TokenV3(String code) {
-        E10Config config = E10Config.getInstance(code);
+    public GetE10TokenV5(String code) {
+        config = E10Config.getInstance(code);
     }
 
-    public GetE10TokenV3() {
-        E10Config config = E10Config.getInstance();
+    public GetE10TokenV5() {
+        config = E10Config.getInstance();
     }
 
 
 
     public static void main(String[] args) {
 //        E10Config.properties.init();
-        GetE10TokenV3 getE10Token = new GetE10TokenV3();
+        GetE10TokenV5 getE10Token = new GetE10TokenV5();
         String token = getE10Token.getToken("xingwb");
         System.out.println("token = " + token);
     }
