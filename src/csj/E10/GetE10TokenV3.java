@@ -11,7 +11,9 @@ import org.json.JSONObject;
  * @Description: 改造成workcode传入形式
  * @Version: 1.0
  */
-public class GetE10TokenV2 {
+public class GetE10TokenV3 {
+
+    private E10Config config;
 
     /**
      * 获取e10 token 工号传入形式
@@ -22,7 +24,7 @@ public class GetE10TokenV2 {
         try {
 //            Console.log ("workCode=>"+workCode);
             JSONObject jsonObject = new JSONObject();
-            E10Config config = E10Config.getInstance();
+
             jsonObject.put("app_key", config.getE10AppKey());
             jsonObject.put("app_security", config.getE10AppSecurity());
             jsonObject.put("authType", "JOB_NUM");
@@ -50,9 +52,19 @@ public class GetE10TokenV2 {
         }
     }
 
+    public GetE10TokenV3(String code) {
+        E10Config config = E10Config.getInstance(code);
+    }
+
+    public GetE10TokenV3() {
+        E10Config config = E10Config.getInstance();
+    }
+
+
+
     public static void main(String[] args) {
 //        E10Config.properties.init();
-        GetE10TokenV2 getE10Token = new GetE10TokenV2();
+        GetE10TokenV3 getE10Token = new GetE10TokenV3();
         String token = getE10Token.getToken("xingwb");
         System.out.println("token = " + token);
     }
