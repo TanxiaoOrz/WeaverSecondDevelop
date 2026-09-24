@@ -88,10 +88,10 @@ public class RestartQuoteExpend extends AbstractModeExpandJavaCodeNew {
                     return ApiUtil.rtnError("对应流程为空, 请联系管理员");
                 }
 
-                if (!ApiUtil.getInstance().interventionRequest(requestId, BDSs, aimNodeId, uid, interventionRemark)) {
+                if (!ApiUtil.getInstance().interventionRequest(requestId, BDSs, aimNodeId, interventionRemark)) {
                     return ApiUtil.rtnError("干预流程回到BDS分发节点失败, 请联系管理员");
                 }
-                if (!ApiUtil.getInstance().deleteData(billid, modeid, uid, customId)) {
+                if (!ApiUtil.getInstance().deleteData(billid, modeid, customId)) {
                     return ApiUtil.rtnError("删除本条数据失败, 请联系管理员");
                 }
             }

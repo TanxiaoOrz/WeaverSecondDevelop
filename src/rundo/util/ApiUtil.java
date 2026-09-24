@@ -31,6 +31,7 @@ public class ApiUtil {
 
     private final String appId;
     private final String baseUrl;
+    private final String defaultOperator;
 
 
     /**
@@ -39,14 +40,16 @@ public class ApiUtil {
     private ApiUtil() {
         this.appId = getPropsWithDefault("appId", "rundo");
         this.baseUrl = getPropsWithDefault("baseUrl", "http://127.0.0.1:8081");
+        this.defaultOperator = getPropsWithDefault("defaultOperator", "2103");
     }
 
     /**
      * 私有构造函数，从 QuoteConfig 配置中加载 appId 和 baseUrl
      */
-    private ApiUtil(String appId, String baseUrl) {
+    private ApiUtil(String appId, String baseUrl, String defaultOperator) {
         this.appId = appId;
         this.baseUrl = baseUrl;
+        this.defaultOperator = defaultOperator;
     }
 
 
@@ -66,6 +69,7 @@ public class ApiUtil {
         return instance;
     }
 
+
     /**
      * 获取带认证 Token 的 HTTP 请求构建器
      * <p>
@@ -76,18 +80,18 @@ public class ApiUtil {
      * </p>
      *
      * @param apiUrl   接口地址
-     * @param operator 操作人 UID
      * @return 带认证头的 Request.Builder
      */
-    public Request.Builder getRequest(String apiUrl, int operator) {
+    public Request.Builder getRequest(String apiUrl) {
         RecordSet rs = new RecordSet();
         String sql = "select * from ecology_biz_ec where appid='" + appId + "'";
+        Console.log("sql => "+sql);
         rs.executeQuery(sql);
         String spk = "";
         String secret = "";
         if (rs.next()) {
             spk = rs.getString("server_public_key");
-            secret = rs.getString("secrit");
+            secret = rs.getString("SECRIT");
         }
         if (spk.isEmpty() || secret.isEmpty()) {
             RSA rsa = new RSA();
@@ -105,6 +109,8 @@ public class ApiUtil {
                 secret = rs.getString("secrit");
             }
         }
+        Console.log("spk=>"+spk);
+        Console.log("secret=>"+secret);
         RSA rsa = new RSA(null, spk);
         String encryptSecret = rsa.encryptBase64(secret, CharsetUtil.CHARSET_UTF_8, KeyType.PublicKey);
         String requestData = HttpRequest.post(baseUrl + "/api/ec/dev/auth/applytoken")
@@ -112,7 +118,7 @@ public class ApiUtil {
                 .header("time", "3600").execute().body();
         Console.log("申请token接口信息：" + requestData);
         String token = (String) JSONUtil.parseObj(requestData).get("token");
-        String encryptUserid = rsa.encryptBase64(String.valueOf(operator),
+        String encryptUserid = rsa.encryptBase64(String.valueOf(defaultOperator),
                 CharsetUtil.CHARSET_UTF_8, KeyType.PublicKey);
         Console.log("encryptUserid = " + encryptUserid);
         Console.log("token = " + token);
@@ -137,11 +143,10 @@ public class ApiUtil {
      * @param requestId 要干预的流程 requestId
      * @param receivers BDS 分发人员（干预人）
      * @param aimNodeId 目标节点 ID
-     * @param uid       操作人 UID
      * @param remark    干预备注
      * @return true 干预成功, false 干预失败
      */
-    public boolean interventionRequest(int requestId, String receivers, int aimNodeId, int uid,
+    public boolean interventionRequest(int requestId, String receivers, int aimNodeId,
                                        String remark) {
         try {
             Console.log("干预流程回到指定节点, requestId = " + requestId
@@ -156,7 +161,7 @@ public class ApiUtil {
             params.put("remark", remark);
             Console.log("干预流程, params = " + params);
 
-            JSONObject rtnJson = executeRequest("/api/workflow/paService/doIntervenor", params, uid);
+            JSONObject rtnJson = executeRequest("/api/workflow/paService/doIntervenor", params);
             Console.log("干预流程结果, rtnJson = " + rtnJson);
             return rtnJson.getString("code").equals("SUCCESS");
         } catch (Exception e) {
@@ -173,11 +178,10 @@ public class ApiUtil {
      *
      * @param billId   数据 ID
      * @param modeId   模块 ID (workflowId)
-     * @param uid      操作人 UID
      * @param customId 表单对应的 customId
      * @return true 删除成功, false 删除失败
      */
-    public boolean deleteData(int billId, int modeId, int uid, int customId) {
+    public boolean deleteData(int billId, int modeId, int customId) {
         try {
             Console.log("删除表单数据, billId = " + billId + ", modeId = " + modeId);
 
@@ -188,7 +192,7 @@ public class ApiUtil {
                     + "&type=0"
                     + "&viewtype=0";
             Console.log("删除数据, apiUrl = " + apiUrl);
-            JSONObject rtnJson = executeRequest(apiUrl, uid);
+            JSONObject rtnJson = executeRequest(apiUrl);
             Console.log("删除数据结果, rtnJson = " + rtnJson);
             return rtnJson.getString("message").contains("删除成功");
         } catch (Exception e) {
@@ -204,11 +208,10 @@ public class ApiUtil {
      * </p>
      *
      * @param requestId   要删除的流程请求 ID
-     * @param uid         操作人 UID
      * @param otherParams 其他参数（可选），如 {"ismonitor":"1"} 表示以监控权限删除
      * @return true 删除成功, false 删除失败
      */
-    public boolean deleteRequest(int requestId, int uid, String otherParams) {
+    public boolean deleteRequest(int requestId, String otherParams) {
         try {
             Console.log("删除流程, requestId = " + requestId);
 
@@ -216,7 +219,7 @@ public class ApiUtil {
             if (otherParams != null && !otherParams.isEmpty())
                 apiUrl += ("&otherParams=" + otherParams);
             Console.log("删除流程, apiUrl = " + apiUrl);
-            JSONObject rtnJson = executeRequest(apiUrl, null, uid, "application/x-www-form-urlencoded");
+            JSONObject rtnJson = executeRequest(apiUrl, null, "application/x-www-form-urlencoded");
             Console.log("删除流程结果, rtnJson = " + rtnJson);
             return rtnJson.getString("code").equals("SUCCESS");
         } catch (Exception e) {
@@ -226,16 +229,16 @@ public class ApiUtil {
     }
 
     @NotNull
-    private JSONObject executeRequest(String path, JSONObject params, int uid) throws IOException, JSONException {
-        return executeRequest(path, params, uid, "application/json");
+    private JSONObject executeRequest(String path, JSONObject params) throws IOException, JSONException {
+        return executeRequest(path, params, "application/json");
 
     }
 
     @NotNull
-    private JSONObject executeRequest(String path, int uid) throws IOException, JSONException {
+    private JSONObject executeRequest(String path) throws IOException, JSONException {
         String apiUrl = baseUrl + path;
         OkHttpClient client = new OkHttpClient().newBuilder().build();
-        Request request = getRequest(apiUrl, uid).get().build();
+        Request request = getRequest(apiUrl).get().build();
         Console.log(request.toString());
         Response response = client.newCall(request).execute();
         String returnString = response.body().string();
@@ -245,14 +248,14 @@ public class ApiUtil {
     }
 
     @NotNull
-    private JSONObject executeRequest(String path, JSONObject params, int uid, String bodyType) throws IOException, JSONException {
+    private JSONObject executeRequest(String path, JSONObject params, String bodyType) throws IOException, JSONException {
         String apiUrl = baseUrl + path;
         OkHttpClient client = new OkHttpClient().newBuilder().build();
         MediaType mediaType = MediaType.parse(bodyType);
         if (params == null)
             params = new JSONObject();
         RequestBody body = RequestBody.create(mediaType, params.toString());
-        Request request = getRequest(apiUrl, uid).post(body).build();
+        Request request = getRequest(apiUrl).post(body).build();
         Console.log(request.toString());
         Response response = client.newCall(request).execute();
         String returnString = response.body().string();
@@ -268,7 +271,7 @@ public class ApiUtil {
      * @return true 删除成功，false 删除失败
      */
     public boolean deleteRequest(int requestId) {
-        return deleteRequest(requestId, 1, "{\"ismonitor\":\"1\"}");
+        return deleteRequest(requestId,  "{\"ismonitor\":\"1\"}");
     }
 
     /**
@@ -315,21 +318,76 @@ public class ApiUtil {
         return value;
     }
 
+    /**
+     * 干预流程测试入口（纯静态代码，不依赖实例，调用的方法实现已抄入本方法内部）
+     */
     public static void main(String[] args) {
-        String spk = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAntWDGxDvxeeTgOB+6UiEjPc6czUgzHVPf8E6n5g59gGXgHp53Q1cOmfomn+ZYf7Vmj8MezZljD8Vnt8N4SMhygp66T4mfsSE0g0ZHU4fuzuEILAD0X4wUgBsRD8GA+QWZlGeTeInYdVahBra8LzAFxjupJNJtO9zjS1HRvIsN1wqxRbt5B2Je3pp0xW7IeXSFO3gu90Y9pVIB26/fAKel3j8sTujavSICPfrJoaaXW8rtlid1HnL1bJ606kui3fJ8xULa/vcPiuVwjYAlLYIn24RZBTdfUNT75ZTX4H6/TmZfXUBbhQUKi+FWH9MqVJ2zILr+ElCyavlSLxwweKa+wIDAQAB";
-        String secret = "884f7a1a-0179-45eb-b79c-f4ed6dc26b5d";
+        // ===================== 1. 配置（对应 QuoteConfig.properties） =====================
         String appId = "rundo";
-        String baseUrl = "http://192.168.11.20:8081/";
-        RSA rsa = new RSA(null, spk);
-        String encryptSecret = rsa.encryptBase64(secret, CharsetUtil.CHARSET_UTF_8, KeyType.PublicKey);
-        String requestData = HttpRequest.post(baseUrl + "/api/ec/dev/auth/applytoken")
-                .header("appid", appId).header("secret", encryptSecret)
-                .header("time", "3600").execute().body();
-        String token = (String) JSONUtil.parseObj(requestData).get("token");
-        String encryptUserid = rsa.encryptBase64(String.valueOf(1),
-                CharsetUtil.CHARSET_UTF_8, KeyType.PublicKey);
-        System.out.println("encryptUserid = " + encryptUserid);
-        System.out.println("token = " + token);
+        String baseUrl = "https://oa.rundo-cro.com:8443";
+        String defaultOperator = "2103";
 
+        // ===================== 2. 需要查询出来的参数（待填写，不使用 RecordSet） =====================
+        // 来自 ecology_biz_ec 表: select server_public_key, secrit from ecology_biz_ec where appid='rundo'
+        String spk = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0CP1UQ9zpryA88YcHkDYrYnf0XcyGCs71vtCMe0dTHDF/0ocxkhLGmRxhoeKWXtiu2G+eoWxmHnLdHcvVa6/1WWkJcOqVMHzRJtQuXsDbXPZ8RRaP78FU1FFSjcVSwjzF1oIi94EeyAgXcrseyeL1NJ6AhqnEa+SbOo+NMbyAPiBnauzg7zXfjQmdwXIAwFrj5Hnj8PKG8eYSZzjHi0xP5nS3azTch97Q3TSGZ1nnabgq/OQ705WNDuGYJqyhwdH9ayFU1l9A6J4d+4gFe00VB2bhnfjdtNaMrt+R2c/DMnNZOGFoM+YwXuoKT+XNKxsMWU0qMIB75tF6Id+cHqhaQIDAQAB";
+        String secret = "799fd7d3-9e4b-4eec-9c39-b944fae6dcc7";
+
+        // ===================== 3. 干预流程入参（待填写） =====================
+        int requestId = 1301372;    // TODO 待填写: 要干预的流程 requestId
+        String receivers = "2103";      // TODO 待填写: BDS 分发人员（干预人）
+        int aimNodeId = 2801;          // TODO 待填写: 目标节点 ID
+        String remark = "测试干预";         // TODO 待填写: 干预备注
+
+        try {
+            /* ----------------- getRequest 实现（去掉取密钥部分，spk/secret 由上方入参提供） ----------------- */
+            System.out.println("spk=>" + spk);
+            System.out.println("secret=>" + secret);
+            RSA rsa = new RSA(null, spk);
+            String encryptSecret = rsa.encryptBase64(secret, CharsetUtil.CHARSET_UTF_8, KeyType.PublicKey);
+            String tokenData = HttpRequest.post(baseUrl + "/api/ec/dev/auth/applytoken")
+                    .header("appid", appId).header("secret", encryptSecret)
+                    .header("time", "3600").execute().body();
+            System.out.println("申请token接口信息：" + tokenData);
+            String token = (String) JSONUtil.parseObj(tokenData).get("token");
+            String encryptUserid = rsa.encryptBase64(String.valueOf(defaultOperator),
+                    CharsetUtil.CHARSET_UTF_8, KeyType.PublicKey);
+            System.out.println("encryptUserid = " + encryptUserid);
+            System.out.println("token = " + token);
+            System.out.println("appId = " + appId);
+
+            /* ------------- interventionRequest 实现（干预流程回到指定节点） ------------- */
+            JSONObject params = new JSONObject();
+            params.put("requestId", requestId);
+            params.put("submitNodeId", aimNodeId);
+            params.put("Intervenorid", receivers);
+            params.put("enableIntervenor", true);
+            params.put("SignType", 0);
+            params.put("remark", remark);
+            System.out.println("干预流程, params = " + params);
+
+            /* ----------------- executeRequest 实现（POST application/json） ----------------- */
+            String apiUrl = baseUrl + "/api/workflow/paService/doIntervenor";
+            OkHttpClient client = new OkHttpClient().newBuilder().build();
+            MediaType mediaType = MediaType.parse("application/json");
+            RequestBody body = RequestBody.create(mediaType, params.toString());
+            Request request = new Request.Builder()
+                    .url(apiUrl)
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("appid", appId)
+                    .addHeader("token", token)
+                    .addHeader("userid", encryptUserid)
+                    .post(body).build();
+            System.out.println(request.toString());
+            Response response = client.newCall(request).execute();
+            String returnString = response.body().string();
+            System.out.println(returnString);
+            JSONObject rtnJson = new JSONObject(returnString);
+
+            System.out.println("干预流程结果, rtnJson = " + rtnJson);
+            System.out.println("干预流程是否成功 = " + rtnJson.getString("code").equals("SUCCESS"));
+        } catch (Exception e) {
+            System.out.println("干预流程异常: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
