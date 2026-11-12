@@ -34,3 +34,4 @@ bin/
 /log/devlog/20240127/BaseTest/00.log
 /log/sdk.log
 /web/log/
+/.claude/settings.local.json

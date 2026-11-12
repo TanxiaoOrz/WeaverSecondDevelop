@@ -8,6 +8,7 @@ import weaver.general.Util;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.Map;
 import java.util.HashMap;
@@ -128,6 +129,20 @@ public class E10Utils {
         }
     }
 
+    /**
+     * 作废当前缓存的 access_token，使下一次 {@link #getAccessToken()} 重新签发。
+     * <p>
+     * 用途：服务端返回 {@code errcode=200007「无效的access_token」} 时，
+     * 可能是改了 app_key/corpid 或换了环境但进程未重启、仍用旧缓存。
+     * 调用本方法后再取一次，即可排除「缓存导致」的假象。
+     * 注意只清 token，不动 config（config 变更需重新 {@code E10Config.init()}）。
+     */
+    public void invalidateToken() {
+        this.access_token = null;
+        this.refresh_token = null;
+        this.occurTime = null;
+    }
+
     private boolean isExpired() {
         if (occurTime == null) {
             return true;
@@ -175,14 +190,28 @@ public class E10Utils {
     // ===== WebHook 通用调用方法 =====
 
     /**
-     * 通用ESB-WebHook调用方法
-     * @param object 请求体JSON对象(调用方自行构建,需包含access_token等参数)
+     * 通用ESB-WebHook调用方法。
+     * <p>
+     * ★ 会自动把 {@code access_token} 作为 <b>query 参数</b> 拼到 URL 上。
+     * 原因：ESB 侧的 webhook 校验读的是 query（实测缺 token 时返回
+     * {@code {"errcode":"200008","errmsg":"access_token没传"}}），
+     * 只把它放进请求体不会生效。
+     * <p>
+     * 兼容性处理：
+     * <ul>
+     *   <li>若 {@code path} 里已经带了 {@code access_token=}，不再重复拼接；</li>
+     *   <li>请求体里原有的 {@code access_token} 字段保留不动，不影响仍在用
+     *       旧写法的调用方（{@code MeetingToProjectAction} /
+     *       {@code QueryTodoContractCount} 等）。</li>
+     * </ul>
+     *
+     * @param object 请求体JSON对象(调用方自行构建业务参数)
      * @param path   URL路径,相对于E10_URL,例如 "/papi/openapi/api/open-esb/server/webhook/trigger/xxx"
      * @return 响应JSONObject,异常时返回null
      */
     public JSONObject callWebhook(JSONObject object, String path) {
         try {
-            String apiUrl = this.config.getE10Url() + path;
+            String apiUrl = appendAccessToken(this.config.getE10Url() + path);
 
             OkHttpClient client = new OkHttpClient().newBuilder().build();
             MediaType mediaType = MediaType.parse("application/json");
@@ -202,6 +231,33 @@ public class E10Utils {
             Console.log("callWebhook异常: path=" + path + ", body=" + object.toString()
                     + ", error=" + e.getMessage() + "\n" + sw.toString());
             return null;
+        }
+    }
+
+    /**
+     * 给 URL 补上 {@code access_token} query 参数。
+     * <p>
+     * 已有 {@code access_token=} 时原样返回，避免重复拼接；
+     * 取不到 token 时也只返回原 URL（让服务端如实报缺 token，便于排查）。
+     */
+    private String appendAccessToken(String url) {
+        try {
+            if (url == null) {
+                return "";
+            }
+            if (url.contains("access_token=")) {
+                return url;
+            }
+            String token = getAccessToken();
+            if (token == null || token.trim().isEmpty()) {
+                return url;
+            }
+            String sep = url.contains("?") ? "&" : "?";
+            return url + sep + "access_token=" + URLEncoder.encode(token, "UTF-8");
+        } catch (Exception e) {
+            Console.log("拼接access_token失败, url=" + url
+                    + ", error=" + e.getClass().getName() + ": " + e.getMessage());
+            return url;
         }
     }
 
