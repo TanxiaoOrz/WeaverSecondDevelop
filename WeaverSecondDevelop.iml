@@ -16,5 +16,6 @@
     <orderEntry type="library" name="lib" level="project" />
     <orderEntry type="library" name="junit-3.8.1" level="project" />
     <orderEntry type="library" name="sysfiledecrypt-encrypted" level="project" />
+    <orderEntry type="library" name="weaver-openapi-sdk-10.0.2409.01" level="project" />
   </component>
 </module>
